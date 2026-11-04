@@ -31,6 +31,7 @@ Once installed it opens in its own window and works offline.
 - Touch and mouse play: ripple, swirl, push and ink
 - Exhibition mode: full screen, controls hidden, the screen kept awake
 - Growth: the study builds itself square by square, from the core, scattered or row by row, once or on a loop
+- Space: load a LiDAR scan of a room or a place and rebuild it in pixel cubes, covering its surfaces or filling its air, then walk around it in AR
 
 **Interact**
 - Camera: visitors' movement darkens, lightens, pushes or ripples the field
@@ -40,7 +41,7 @@ Once installed it opens in its own window and works offline.
 Camera and microphone are processed on the device. Nothing is recorded, saved or sent.
 
 **Show and save**
-- Saves PNGs and MP4 videos (slow motion to time-lapse, up to 4K, with the song's sound)
+- Saves PNGs and MP4 videos (slow motion to time-lapse, up to 4K, with the song's sound), and USDZ files for AR from Space
 - Print: A4 to A1 and square or poster sizes in cm, border, signature line, 150 or 300 dpi PNG, plus PDF and SVG vector files with one layer per tone
 - TV: a TV link, 4K screensaver images and seamless TV loop videos
 
@@ -52,6 +53,22 @@ Camera and microphone are processed on the device. Nothing is recorded, saved or
 - **Apple TV:** add the images to a shared photo album and choose it as the screen saver.
 - **Any TV with USB:** use "Set up a TV loop video", render it, copy the MP4 to a USB stick and play it on repeat.
 - **Casting:** open the app in Chrome and cast the tab, or use AirPlay from a Mac, iPhone or iPad.
+
+## Scan a place with an iPhone (Space)
+
+Websites can't use the iPhone's LiDAR scanner directly, so the scan is made in a scanner app and loaded into Pixel Machine.
+
+1. **Scan.** On an iPhone or iPad Pro with LiDAR, scan the room with a free app such as **Scaniverse** or **3d Scanner App**. Walk slowly and cover the floor, the walls and the ceiling.
+2. **Export.** Share the scan as **GLB** (best), **OBJ** or **PLY**, and save it to Files.
+3. **Load.** In Pixel Machine, open **Space**, press **Load a scan** and pick the file, or drop it on the work on a computer. **Try a sample room** shows how it works without a scan.
+4. **Shape it.**
+   - **Cover the surfaces** tiles the floor, walls and furniture with pixel cubes.
+   - **Fill the air** fills the room with a cloud of cubes, dense and dark at the core and thinning out toward the pale edges.
+   - Pixel size, spread, density and the core's position set the look. Every movement, palette, growth order and music reaction works in 3D too.
+5. **Look around.** Drag to turn the space and pinch or scroll to zoom. **Inside** puts you in the room at eye height. A quick tap sends a pulse through the pixels.
+6. **Save.** PNG and MP4 saving work as usual. **View in AR** (iPhone and iPad) or **Save USDZ for AR** places the pixels in the real room at true size, so you can walk through them.
+
+The scan never leaves the device. If a scan lies on its side, switch **Up direction** to Z. Scans in centimetres or millimetres are scaled to metres automatically.
 
 ## Live performance setup
 

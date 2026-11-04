@@ -556,6 +556,7 @@ kbd {
 
     <nav class="jump" id="jump" aria-label="Jump to a section">
       <button type="button" data-to="sec-format">Shape</button>
+      <button type="button" data-to="space">Space</button>
       <button type="button" data-to="movement">Motion</button>
       <button type="button" data-to="music">Music</button>
       <button type="button" data-to="video" hidden>Video</button>
@@ -580,6 +581,88 @@ kbd {
       <h2>Grid <small>squares along the long side</small></h2>
       <div class="grid4" id="grids"></div>
       <p class="note" id="grid-note"></p>
+    </section>
+
+    <section class="group" id="space">
+      <h2>Space <small>fill a scanned place with pixels</small></h2>
+      <p class="note">Scan a room or a place with a LiDAR scanner app on your iPhone, such as Scaniverse or 3d Scanner App. Export it as GLB, OBJ or PLY (a ZIP is fine too), then load it here. The scan stays on your device.</p>
+      <input type="file" id="sp-file" hidden>
+      <div class="actions">
+        <button type="button" class="btn primary" id="sp-load">Load a scan</button>
+        <button type="button" class="btn" id="sp-demo">Try a sample room</button>
+      </div>
+      <button type="button" class="btn wide" id="sp-reopen" hidden>Back to the scan</button>
+      <div class="group" id="sp-controls" hidden>
+        <div class="seg full words" role="group" aria-label="How the pixels fill the space" id="sp-mode">
+          <button type="button" id="spmode-cover" data-v="cover">Cover the surfaces</button>
+          <button type="button" id="spmode-fill" data-v="fill">Fill the air</button>
+        </div>
+        <div class="vopt">
+          <span id="sp-size-label">Pixel size</span>
+          <div class="seg full" role="group" aria-labelledby="sp-size-label" id="sp-size">
+            <button type="button" id="spsize-2" data-v="0.02">2 cm</button>
+            <button type="button" id="spsize-5" data-v="0.05">5 cm</button>
+            <button type="button" id="spsize-10" data-v="0.1">10 cm</button>
+            <button type="button" id="spsize-20" data-v="0.2">20 cm</button>
+          </div>
+        </div>
+        <div class="sliders">
+          <div class="ctrl">
+            <label for="spspread">Spread</label><output id="spspread-out" for="spspread">100%</output>
+            <input type="range" id="spspread" min="20" max="300" step="1" value="100">
+          </div>
+          <div class="ctrl" id="spdens-row">
+            <label for="spdens">Density</label><output id="spdens-out" for="spdens">55%</output>
+            <input type="range" id="spdens" min="5" max="100" step="1" value="55">
+          </div>
+          <div class="ctrl">
+            <label for="spcx">Core: across</label><output id="spcx-out" for="spcx">50%</output>
+            <input type="range" id="spcx" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="ctrl">
+            <label for="spcy">Core: height</label><output id="spcy-out" for="spcy">35%</output>
+            <input type="range" id="spcy" min="0" max="100" step="1" value="35">
+          </div>
+          <div class="ctrl">
+            <label for="spcz">Core: depth</label><output id="spcz-out" for="spcz">50%</output>
+            <input type="range" id="spcz" min="0" max="100" step="1" value="50">
+          </div>
+          <div class="ctrl" id="spcut-row">
+            <label for="spcut">Cut away the top</label><output id="spcut-out" for="spcut">12%</output>
+            <input type="range" id="spcut" min="0" max="60" step="1" value="12">
+          </div>
+        </div>
+        <div class="row">
+          <span>View</span>
+          <div class="seg words" role="group" aria-label="View" id="sp-view">
+            <button type="button" id="spview-orbit" data-v="orbit">From outside</button>
+            <button type="button" id="spview-inside" data-v="inside">Inside</button>
+          </div>
+        </div>
+        <div class="row">
+          <span>Slowly turn <small>while it plays</small></span>
+          <button type="button" class="btn toggle" id="sp-turn" aria-pressed="true">On</button>
+        </div>
+        <div class="row">
+          <span>Show the scan <small>under the pixels</small></span>
+          <button type="button" class="btn toggle" id="sp-scan" aria-pressed="true">On</button>
+        </div>
+        <div class="row">
+          <span>Up direction <small>if the scan lies on its side</small></span>
+          <div class="seg" role="group" aria-label="Up direction" id="sp-up">
+            <button type="button" id="spup-y" data-v="y">Y</button>
+            <button type="button" id="spup-z" data-v="z">Z</button>
+          </div>
+        </div>
+        <p class="note" id="sp-info"></p>
+        <div class="actions">
+          <button type="button" class="btn primary" id="sp-ar" hidden>View in AR</button>
+          <button type="button" class="btn" id="sp-usdz">Save USDZ for AR</button>
+        </div>
+        <button type="button" class="btn wide" id="sp-close">Back to the flat study</button>
+        <p class="note">On iPhone and iPad, View in AR places the pixels in the real room at true size, so you can walk around them. PNG and video saving work in Space too. Prints, TV images and the output window use the flat study.</p>
+      </div>
+      <p class="status" id="sp-status" aria-live="polite"></p>
     </section>
 
     <section class="group" id="movement">
@@ -1101,7 +1184,8 @@ kbd {
     { id: "50x70", name: "50 × 70", w: 500, h: 700, cm: true }, { id: "70x100", name: "70 × 100", w: 700, h: 1000, cm: true },
   ];
   const QUALITY_CAP = { full: 4.2e6, balanced: 2.1e6, light: 0.9e6 };
-  const MIDI_TARGETS = ["speed", "strength", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "levels", "hue", "tstrength", "tsize", "msens", "mvol", "cstrength", "gdur"];
+  const SP_SIZES = [0.02, 0.05, 0.1, 0.2];
+  const MIDI_TARGETS = ["speed", "strength", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "levels", "hue", "tstrength", "tsize", "msens", "mvol", "cstrength", "gdur", "spspread", "spcx", "spcy", "spcz", "spdens", "spcut"];
   const APP_URL = "https://serski.github.io/pixel-machine/";
   const isOutput = location.hash === "#output";
   const tvMode = /[?&]tv\b/.test(location.search) || location.hash === "#tv";
@@ -1121,6 +1205,8 @@ kbd {
     gmode: "off", gorder: "core", gdur: 20,
     prpaper: "a3", prborder: 20, prcaption: true, prdpi: 300,
     exchange: 0, exquality: "full", tvcount: 12, midimap: {},
+    spmode: "cover", spsize: 0.05, spdens: 55, spcx: 50, spcy: 35, spcz: 50, spspread: 100, spcut: 12,
+    spview: "orbit", spscan: true, spup: "y", spturn: true,
   };
   const PRESETS = [
     { id: "deep", name: "Deep blue study", meta: "20 × 20 · 10 tones",
@@ -1192,6 +1278,13 @@ kbd {
     if (![0, 5, 15, 60].includes(state.exchange)) state.exchange = 0;
     if (!QUALITY_CAP[state.exquality]) state.exquality = "full";
     if (![6, 12, 24].includes(state.tvcount)) state.tvcount = 12;
+    if (state.spmode !== "cover" && state.spmode !== "fill") state.spmode = "cover";
+    if (!SP_SIZES.includes(state.spsize)) state.spsize = 0.05;
+    for (const [k, lo, hi] of [["spdens", 5, 100], ["spcx", 0, 100], ["spcy", 0, 100], ["spcz", 0, 100], ["spspread", 20, 300], ["spcut", 0, 60]]) {
+      state[k] = Math.max(lo, Math.min(hi, Math.round(+state[k] || 0)));
+    }
+    if (state.spview !== "orbit" && state.spview !== "inside") state.spview = "orbit";
+    if (state.spup !== "y" && state.spup !== "z") state.spup = "y";
     const mm = {};
     if (state.midimap && typeof state.midimap === "object" && !Array.isArray(state.midimap)) {
       for (const [cc, id] of Object.entries(state.midimap)) if (/^\d{1,3}$/.test(cc) && MIDI_TARGETS.includes(id)) mm[cc] = id;
@@ -1574,14 +1667,14 @@ void main() {
 }`;
 
   let art = $("art");
-  let camTex = null;
+  let camTex = null, quadVao = null, fboDepth = null;
   let gl = null, prog = null, U = {}, noiseTex = null, glNoiseSeed = null, fbo = null, fboTex = null, fboW = 0, fboH = 0, maxTile = 2048, glLost = false;
   let ctx2d = null;
   let lut = null, lutDirty = true, lutF = new Float32Array(96), lutVersion = 0;
 
   function initGL() {
     try {
-      gl = art.getContext("webgl2", { antialias: false, alpha: false, depth: false, stencil: false, premultipliedAlpha: false, preserveDrawingBuffer: false });
+      gl = art.getContext("webgl2", { antialias: false, alpha: false, depth: true, stencil: false, premultipliedAlpha: false, preserveDrawingBuffer: false });
     } catch (e) { gl = null; }
     if (!gl) return false;
     return setupGL();
@@ -1608,7 +1701,8 @@ void main() {
       "uCam", "uCamAmt", "uCamMode", "uCamXf", "uCamTexel", "uGrow", "uGrowOrder", "uGround"];
     U = {};
     names.forEach(n => { U[n] = gl.getUniformLocation(prog, n); });
-    gl.bindVertexArray(gl.createVertexArray());
+    quadVao = gl.createVertexArray();
+    gl.bindVertexArray(quadVao);
     noiseTex = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, noiseTex);
@@ -1672,6 +1766,8 @@ void main() {
   }
 
   function drawGL(P, tgt) {
+    gl.bindVertexArray(quadVao);
+    gl.disable(gl.DEPTH_TEST);
     gl.bindFramebuffer(gl.FRAMEBUFFER, tgt.fb || null);
     gl.viewport(0, 0, tgt.w, tgt.h);
     gl.useProgram(prog);
@@ -1754,6 +1850,11 @@ void main() {
     fbo = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTex, 0);
+    if (fboDepth) gl.deleteRenderbuffer(fboDepth);
+    fboDepth = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, fboDepth);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, w, h);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, fboDepth);
     gl.activeTexture(gl.TEXTURE0);
     fboW = w; fboH = h;
   }
@@ -1840,6 +1941,7 @@ void main() {
       opts.pulses = livePulses();
       opts.grow = growNow();
       const P = fieldParams(state, time, true, opts);
+      if (space.active) { drawSpace(P, { w: Dw, h: Dh }); return; }
       const span = 1 / view.z, px = [span / Dw, span / Dh];
       const cpp = P.cols * px[0];
       let ss = cpp > 1.25 ? Math.min(3, Math.ceil(cpp)) : 1;
@@ -1868,6 +1970,7 @@ void main() {
       needsDraw = true;
     }
     if (exhibit.active && state.exWander && gl) needsDraw = true;
+    if (space.active && state.spturn && gl && state.playing) { space.turn += dt * 0.15 * Math.max(0.1, state.speed / 40); needsDraw = true; }
     camFrame(now);
     if (pulses.length) needsDraw = true;
     tickGrowth(now);
@@ -1915,12 +2018,19 @@ void main() {
     $("grid-note").textContent = state.grid === 20 && f.id === "1x1" ? "20 × 20 matches your two artworks."
       : `${fmt(dm.cols)} × ${fmt(dm.rows)} squares in this format.${state.grid >= 1000 ? " Zoom in on the work to see single squares." : ""}`;
     if (!gl && ctx2d) renderEl.textContent = state.grid > 600 ? "Basic mode: grids above 600 show at 600 here. Saved PNGs use the full grid." : "";
+    if (space.active && space.geom) {
+      const bs = space.geom.bounds.size;
+      $("l-medium").textContent = `Square pixels in space, ${state.spmode === "fill" ? "filling the air of" : "covering"} ${space.name}, ${palName}${state.invert ? " inverted" : ""}, ${state.levels} tones`;
+      $("l-dims").textContent = `${fmt(space.count)} pixels · ${Math.round(space.size * 100)} cm each · ${bs[0].toFixed(1)} × ${bs[1].toFixed(1)} × ${bs[2].toFixed(1)} m`;
+      $("save-note").textContent = "Saves the current view as a PNG, up to 3,000 px wide.";
+    }
   }
   function updateHint() {
     const zoomed = view.z > 1.0001;
-    art.classList.toggle("pan", zoomed);
+    art.classList.toggle("pan", zoomed || space.active);
     let h;
-    if (zoomed) h = "Drag to look around. Fit to go back.";
+    if (space.active) h = (state.spview === "inside" ? "Drag to look around. Pinch or scroll to zoom." : "Drag to turn the space. Pinch or scroll to zoom.") + (touchOn() ? " Tap to send a pulse through it." : "");
+    else if (zoomed) h = "Drag to look around. Fit to go back.";
     else if (!touchOn()) h = state.centers > 1 ? "Drag on the work to move the nearest center." : "Drag on the work to move its center.";
     else if (state.dragmode === "play") h = coarse ? "Touch and drag on the work to play." : "Move the mouse or drag on the work to play.";
     else h = coarse ? "Drag on the work to move its center." : "Move the mouse over the work to play. Drag to move its center.";
@@ -1928,7 +2038,7 @@ void main() {
   }
   function updateZoomUI() {
     const zm = zMax();
-    $("zoom").hidden = zm <= 1;
+    $("zoom").hidden = zm <= 1 || space.active;
     $("zoom-in").disabled = view.z >= zm - 1e-6;
     $("zoom-out").disabled = view.z <= 1.0001;
     $("zoom-fit").disabled = view.z <= 1.0001;
@@ -1973,7 +2083,7 @@ void main() {
   }
 
   // ---------- controls ----------
-  const sliderIds = ["levels", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "hue", "speed", "strength", "tstrength", "tsize", "msens", "mvol", "cstrength", "gdur", "prborder"];
+  const sliderIds = ["levels", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "hue", "speed", "strength", "tstrength", "tsize", "msens", "mvol", "cstrength", "gdur", "prborder", "spspread", "spdens", "spcx", "spcy", "spcz", "spcut"];
   const sliders = {};
   sliderIds.forEach(id => { sliders[id] = $(id); });
 
@@ -2151,6 +2261,7 @@ void main() {
     updatePrintUI();
     updateTvUI();
     updatePerfUI();
+    updateSpaceUI();
     updateLabel();
     updateZoomUI();
     updateSave();
@@ -2162,7 +2273,7 @@ void main() {
     queueSendState();
   }
 
-  ["levels", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "speed", "strength", "tstrength", "tsize", "msens", "cstrength", "gdur", "prborder"].forEach(id => {
+  ["levels", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "speed", "strength", "tstrength", "tsize", "msens", "cstrength", "gdur", "prborder", "spspread", "spdens", "spcx", "spcy", "spcz", "spcut"].forEach(id => {
     const el = sliders[id];
     el.addEventListener("input", () => {
       state[id] = +el.value;
@@ -2237,6 +2348,7 @@ void main() {
   }
   function bindCanvas() {
     art.addEventListener("wheel", e => {
+      if (space.active) { e.preventDefault(); space.dist = Math.max(0.15, Math.min(6, space.dist * Math.exp(e.deltaY * 0.0012))); needsDraw = true; return; }
       if (exhibit.active || zMax() <= 1) return;
       e.preventDefault();
       const r = art.getBoundingClientRect();
@@ -2245,6 +2357,7 @@ void main() {
     art.addEventListener("pointerdown", e => {
       try { art.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
       if (exhibit.active) showChrome();
+      if (space.active) { spacePointer(e, "down"); return; }
       if (view.z > 1.0001 && !exhibit.active) {
         if (!drags.size) drags.set(e.pointerId, { mode: "pan", sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y });
         return;
@@ -2266,6 +2379,7 @@ void main() {
       moveWell(best, u, v);
     });
     art.addEventListener("pointermove", e => {
+      if (space.active) { spacePointer(e, "move"); return; }
       const d = drags.get(e.pointerId);
       if (!d) {
         if (e.pointerType === "mouse" && touchOn()) { const [ax, ay] = artFrac(e); emitTouch(ax, ay, e.pointerId, false); }
@@ -2281,6 +2395,7 @@ void main() {
       }
     });
     const endDrag = e => {
+      spacePointer(e, "up");
       const d = drags.get(e.pointerId);
       drags.delete(e.pointerId);
       if (e.pointerType !== "mouse" || e.type === "pointerleave") lastEmit.delete(e.pointerId);
@@ -2313,7 +2428,7 @@ void main() {
       else if (e.key === "m" || e.key === "M") { e.preventDefault(); toggleMusic(); }
     });
     art.addEventListener("webglcontextlost", e => { e.preventDefault(); glLost = true; });
-    art.addEventListener("webglcontextrestored", () => { glLost = false; setupGL(); needsDraw = true; });
+    art.addEventListener("webglcontextrestored", () => { glLost = false; setupGL(); space.gl = null; space.dirty = true; needsDraw = true; });
   }
 
   // ---------- exhibition ----------
@@ -2429,6 +2544,7 @@ void main() {
   }
   const wait = ms => new Promise(r => setTimeout(r, ms));
   async function buildPNG() {
+    if (space.active && gl && !glLost) return buildSpacePNG();
     const dm = dimsOf(state), s = exportScale(dm), Ew = dm.cols * s, Eh = dm.rows * s;
     const c = document.createElement("canvas");
     c.width = Ew; c.height = Eh;
@@ -2503,7 +2619,7 @@ void main() {
       return;
     }
     const frameTag = gl && motionSet(state).size ? `-t${Math.round(time * 10)}` : "";
-    const name = `${fileBase()}-${res.dm.cols}x${res.dm.rows}${frameTag}.png`;
+    const name = `${fileBase()}-${space.active ? "space-" : ""}${res.dm.cols}x${res.dm.rows}${frameTag}.png`;
     setStatus("Confirm the save in the prompt.");
     await saveFile(name, res.blob);
     saving = false;
@@ -2664,7 +2780,9 @@ void main() {
           tt = t0 + k * step;
         }
         const grow = snap.gmode === "off" ? 2 : growAt(i / fps, snap.gmode, snap.gdur);
-        drawGL(fieldParams(snap, tt, true, { dims: dm, audio, grow }), { fb: fbo, w: W, h: H, origin: [0, 0], px: [1 / W, 1 / H], ss, flip: true, lut: lutSnap });
+        const FP = fieldParams(snap, tt, true, { dims: dm, audio, grow });
+        const tgt = { fb: fbo, w: W, h: H, origin: [0, 0], px: [1 / W, 1 / H], ss, flip: true, lut: lutSnap, turn: i / fps, snap };
+        if (space.active) drawSpace(FP, tgt); else drawGL(FP, tgt);
         gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
         const ts = Math.round(i * 1e6 / fps), next = Math.round((i + 1) * 1e6 / fps);
         const vf = new VideoFrame(pixels, { format: "RGBA", codedWidth: W, codedHeight: H, timestamp: ts, duration: next - ts });
@@ -2752,7 +2870,7 @@ void main() {
       if (!blob.size) { vStatus("The recording came out empty. Try again."); return; }
       vStatus("Confirm the save in the prompt.");
       const dm = dimsOf(state);
-      await saveFile(`${fileBase()}-${dm.cols}x${dm.rows}${plan.useMusic ? "-music" : ""}.${recMime.ext}`, blob, vStatus);
+      await saveFile(`${fileBase()}-${space.active ? "space" : `${dm.cols}x${dm.rows}`}${plan.useMusic ? "-music" : ""}.${recMime.ext}`, blob, vStatus);
     };
     recorder.start(500);
     recStart = performance.now();
@@ -2793,7 +2911,7 @@ void main() {
     if (res === "cancelled") { vStatus("Video cancelled."); return; }
     const dm = dimsOf(state);
     const tag = res.useMusic ? "-music" : state.vspeed === 1 ? "" : `-${String(state.vspeed).replace(".", "_")}x`;
-    const name = `${fileBase()}-${dm.cols}x${dm.rows}${tag}${res.loop ? "-loop" : ""}.mp4`;
+    const name = `${fileBase()}-${space.active ? "space" : `${dm.cols}x${dm.rows}`}${tag}${res.loop ? "-loop" : ""}.mp4`;
     vStatus("Confirm the save in the prompt.");
     const ok = await saveFile(name, res.blob, vStatus);
     if (ok && res.silent) vStatus(`Saved ${name} without sound, because this browser can't encode audio. Add the song in a video editor, starting at ${fmtTime(res.start)}.`);
@@ -3129,8 +3247,10 @@ void main() {
     e.preventDefault();
     dragDepth = 0;
     app.classList.remove("dropping");
+    const scanFile = Array.from(e.dataTransfer.files).find(x => /\.(glb|gltf|obj|ply|zip|usdz)$/i.test(x.name));
+    if (scanFile) { $("space").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" }); loadScan(scanFile); return; }
     const f = Array.from(e.dataTransfer.files).find(x => /^audio\//.test(x.type) || /\.(mp3|wav|m4a|aac|ogg|oga|flac|opus)$/i.test(x.name));
-    if (f) loadMusic(f); else mStatus("Drop an audio file, such as an MP3 or WAV.");
+    if (f) loadMusic(f); else mStatus("Drop a song (MP3 or WAV) or a scan (GLB, OBJ or PLY).");
   });
 
   // ---------- shared helpers for devices ----------
@@ -3699,6 +3819,10 @@ void main() {
     $("pr-vector-note").textContent = vec
       ? "PDF and SVG draw every square as a shape, sharp at any size, with each tone on its own layer for printers and plotters."
       : "PDF and SVG files are available up to 500 × 500 squares. For bigger grids, use the print PNG.";
+    if (space.active) {
+      $("pr-png").disabled = $("pr-pdf").disabled = $("pr-svg").disabled = true;
+      $("pr-vector-note").textContent = "Prints use the flat study. Go back to it in the Space section to print.";
+    }
   }
   async function savePrintPNG() {
     if (!downloads || !gl || printing) return;
@@ -3914,7 +4038,7 @@ void main() {
     $("tv-link").textContent = tvLink().replace(/^https?:\/\//, "");
     document.querySelectorAll("#tv-count button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === state.tvcount)));
     if (!tvBusy) $("tv-pack").textContent = `Save ${state.tvcount} screensaver images (4K)`;
-    $("tv-pack").disabled = tvBusy;
+    $("tv-pack").disabled = tvBusy || space.active;
   }
   $("tv-copy").addEventListener("click", async () => {
     try {
@@ -3996,6 +4120,975 @@ void main() {
     setInterval(updatePerfUI, 3000);
     if (tvMode) startTvMode();
   }
+
+  // ---------- Space: fill a scanned place with pixels ----------
+  const SP_CAP = { cover: 220000, fill: 140000, ar: 60000 };
+  const space = {
+    active: false, raw: null, name: "", geom: null,
+    centers: null, count: 0, size: 0.05, radius: 1, scanPos: null,
+    yaw: 0.75, pitch: 0.62, dist: 1.55, turn: 0,
+    gl: null, dirty: true, busy: false,
+  };
+  const spStatus = msg => { $("sp-status").textContent = msg; };
+  const arSupported = (() => { try { return document.createElement("a").relList.supports("ar"); } catch (e) { return false; } })();
+
+  // Small 4x4 matrix helpers, column-major like WebGL.
+  const m4 = {
+    ident: () => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    mul(a, b) {
+      const o = new Array(16);
+      for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let v = 0; for (let k = 0; k < 4; k++) v += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = v; }
+      return o;
+    },
+    trs(t, q, sc) {
+      const [x, y, z, w] = q, [sx, sy, sz] = sc;
+      return [
+        (1 - 2 * (y * y + z * z)) * sx, 2 * (x * y + w * z) * sx, 2 * (x * z - w * y) * sx, 0,
+        2 * (x * y - w * z) * sy, (1 - 2 * (x * x + z * z)) * sy, 2 * (y * z + w * x) * sy, 0,
+        2 * (x * z + w * y) * sz, 2 * (y * z - w * x) * sz, (1 - 2 * (x * x + y * y)) * sz, 0,
+        t[0], t[1], t[2], 1,
+      ];
+    },
+    persp(fovy, aspect, near, far) {
+      const f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far);
+      return [f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0];
+    },
+    lookAt(e, t, up) {
+      let zx = e[0] - t[0], zy = e[1] - t[1], zz = e[2] - t[2], l = Math.hypot(zx, zy, zz) || 1;
+      zx /= l; zy /= l; zz /= l;
+      let xx = up[1] * zz - up[2] * zy, xy = up[2] * zx - up[0] * zz, xz = up[0] * zy - up[1] * zx;
+      l = Math.hypot(xx, xy, xz) || 1; xx /= l; xy /= l; xz /= l;
+      const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+      return [xx, yx, zx, 0, xy, yy, zy, 0, xz, yz, zz, 0, -(xx * e[0] + xy * e[1] + xz * e[2]), -(yx * e[0] + yy * e[1] + yz * e[2]), -(zx * e[0] + zy * e[1] + zz * e[2]), 1];
+    },
+  };
+  function concatF32(list) {
+    let n = 0;
+    list.forEach(a => { n += a.length; });
+    const out = new Float32Array(n);
+    let o = 0;
+    list.forEach(a => { out.set(a, o); o += a.length; });
+    return out;
+  }
+
+  // ----- reading scans: GLB / glTF, OBJ, PLY -----
+  function readAccessor(json, buffers, idx) {
+    const a = json.accessors[idx];
+    if (a.bufferView == null) throw new Error("This file uses a feature Pixel Machine can't read. Export it as OBJ or PLY instead.");
+    const bv = json.bufferViews[a.bufferView], buf = buffers[bv.buffer || 0];
+    const comps = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 }[a.type] || 1;
+    const size = { 5120: 1, 5121: 1, 5122: 2, 5123: 2, 5125: 4, 5126: 4 }[a.componentType];
+    const stride = bv.byteStride || size * comps, base = (bv.byteOffset || 0) + (a.byteOffset || 0);
+    const dv = new DataView(buf), out = new Float64Array(a.count * comps);
+    const norm = a.normalized ? ({ 5120: 127, 5121: 255, 5122: 32767, 5123: 65535 }[a.componentType] || 1) : 1;
+    for (let i = 0; i < a.count; i++) {
+      const o = base + i * stride;
+      for (let c = 0; c < comps; c++) {
+        const q = o + c * size;
+        let v;
+        switch (a.componentType) {
+          case 5126: v = dv.getFloat32(q, true); break;
+          case 5125: v = dv.getUint32(q, true); break;
+          case 5123: v = dv.getUint16(q, true); break;
+          case 5122: v = dv.getInt16(q, true); break;
+          case 5121: v = dv.getUint8(q); break;
+          default: v = dv.getInt8(q);
+        }
+        out[i * comps + c] = norm !== 1 ? Math.max(v / norm, -1) : v;
+      }
+    }
+    return out;
+  }
+  function gltfGeometry(json, buffers) {
+    const used = json.extensionsUsed || [];
+    if (used.includes("KHR_draco_mesh_compression") || used.includes("EXT_meshopt_compression")) throw new Error("This GLB is compressed. Export it again without compression, or as OBJ or PLY.");
+    const tris = [], pts = [];
+    const visit = (ni, parent) => {
+      const n = json.nodes[ni];
+      const local = n.matrix ? n.matrix.slice() : m4.trs(n.translation || [0, 0, 0], n.rotation || [0, 0, 0, 1], n.scale || [1, 1, 1]);
+      const w = m4.mul(parent, local);
+      if (n.mesh != null) {
+        for (const pr of json.meshes[n.mesh].primitives) {
+          if (!pr.attributes || pr.attributes.POSITION == null) continue;
+          const P = readAccessor(json, buffers, pr.attributes.POSITION), tp = new Float32Array(P.length);
+          for (let i = 0; i < P.length; i += 3) {
+            const x = P[i], y = P[i + 1], z = P[i + 2];
+            tp[i] = w[0] * x + w[4] * y + w[8] * z + w[12];
+            tp[i + 1] = w[1] * x + w[5] * y + w[9] * z + w[13];
+            tp[i + 2] = w[2] * x + w[6] * y + w[10] * z + w[14];
+          }
+          const mode = pr.mode == null ? 4 : pr.mode;
+          if (mode === 0) { pts.push(tp); continue; }
+          if (mode !== 4) continue;
+          const I = pr.indices != null ? readAccessor(json, buffers, pr.indices) : null;
+          const nv = I ? I.length : tp.length / 3, T = new Float32Array(Math.floor(nv / 3) * 9);
+          for (let t = 0, o = 0; t + 2 < nv; t += 3) {
+            for (let k = 0; k < 3; k++) { const vi = (I ? I[t + k] : t + k) * 3; T[o++] = tp[vi]; T[o++] = tp[vi + 1]; T[o++] = tp[vi + 2]; }
+          }
+          tris.push(T);
+        }
+      }
+      (n.children || []).forEach(c => visit(c, w));
+    };
+    const scene = json.scenes && json.scenes.length ? json.scenes[json.scene || 0] : { nodes: (json.nodes || []).map((_, i) => i) };
+    (scene.nodes || []).forEach(ni => visit(ni, m4.ident()));
+    return { tris: concatF32(tris), points: concatF32(pts) };
+  }
+  function parseGLB(buf) {
+    const dv = new DataView(buf);
+    if (buf.byteLength < 20 || dv.getUint32(0, true) !== 0x46546C67) throw new Error("That isn't a GLB file.");
+    let off = 12, json = null, bin = null;
+    while (off + 8 <= buf.byteLength) {
+      const len = dv.getUint32(off, true), type = dv.getUint32(off + 4, true);
+      if (type === 0x4E4F534A) json = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, off + 8, len)));
+      else if (type === 0x004E4942) bin = buf.slice(off + 8, off + 8 + len);
+      off += 8 + len;
+    }
+    if (!json) throw new Error("That GLB file has no scene in it.");
+    return gltfGeometry(json, [bin]);
+  }
+  function parseGLTF(text) {
+    const json = JSON.parse(text);
+    const buffers = (json.buffers || []).map(b => {
+      if (!b.uri || !b.uri.startsWith("data:")) throw new Error("This glTF keeps its data in separate files. Export it as GLB instead.");
+      const bin = atob(b.uri.slice(b.uri.indexOf(",") + 1)), u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      return u8.buffer;
+    });
+    return gltfGeometry(json, buffers);
+  }
+  function parseOBJ(text) {
+    const v = [], tri = [], n = text.length;
+    let start = 0;
+    while (start < n) {
+      let end = text.indexOf("\n", start);
+      if (end < 0) end = n;
+      const c0 = text.charCodeAt(start), c1 = text.charCodeAt(start + 1);
+      if (c0 === 118 && (c1 === 32 || c1 === 9)) {
+        const parts = text.slice(start + 2, end).trim().split(/\s+/);
+        v.push(+parts[0], +parts[1], +parts[2]);
+      } else if (c0 === 102 && (c1 === 32 || c1 === 9)) {
+        const parts = text.slice(start + 2, end).trim().split(/\s+/), nv = v.length / 3;
+        const ids = parts.map(q => { const k = parseInt(q, 10); return k < 0 ? nv + k : k - 1; });
+        for (let k = 1; k + 1 < ids.length; k++) tri.push(ids[0], ids[k], ids[k + 1]);
+      }
+      start = end + 1;
+    }
+    const T = new Float32Array(tri.length * 3);
+    for (let k = 0; k < tri.length; k++) { const vi = tri[k] * 3; T[k * 3] = v[vi]; T[k * 3 + 1] = v[vi + 1]; T[k * 3 + 2] = v[vi + 2]; }
+    return { tris: T, points: tri.length ? new Float32Array(0) : new Float32Array(v) };
+  }
+  function parsePLY(buf) {
+    const u8 = new Uint8Array(buf), lim = Math.min(u8.length, 65536), END = [101, 110, 100, 95, 104, 101, 97, 100, 101, 114];
+    let he = -1;
+    for (let i = 0; i + END.length <= lim && he < 0; i++) { let k = 0; while (k < END.length && u8[i + k] === END[k]) k++; if (k === END.length) he = i; }
+    const probe = new TextDecoder("latin1").decode(u8.subarray(0, Math.max(0, he)));
+    if (!probe.startsWith("ply") || he < 0) throw new Error("That isn't a PLY file.");
+    let bodyStart = he + END.length;
+    while (bodyStart < u8.length && (u8[bodyStart] === 13 || u8[bodyStart] === 10)) { bodyStart++; if (u8[bodyStart - 1] === 10) break; }
+    const lines = probe.slice(0, he).split(/\r?\n/);
+    let format = "ascii";
+    const els = [];
+    for (const ln of lines) {
+      const t = ln.trim().split(/\s+/);
+      if (t[0] === "format") format = t[1];
+      else if (t[0] === "element") els.push({ name: t[1], count: +t[2], props: [] });
+      else if (t[0] === "property" && els.length) {
+        if (t[1] === "list") els[els.length - 1].props.push({ name: t[4], list: true, ct: t[2], it: t[3] });
+        else els[els.length - 1].props.push({ name: t[2], type: t[1] });
+      }
+    }
+    if (format === "binary_big_endian") throw new Error("This PLY is big-endian. Export it again as binary little-endian or ASCII.");
+    const SZ = { char: 1, int8: 1, uchar: 1, uint8: 1, short: 2, int16: 2, ushort: 2, uint16: 2, int: 4, int32: 4, uint: 4, uint32: 4, float: 4, float32: 4, double: 8, float64: 8 };
+    const pos = [], tri = [];
+    if (format === "ascii") {
+      const tok = new TextDecoder().decode(u8.subarray(bodyStart)).split(/\s+/).filter(Boolean);
+      let k = 0;
+      for (const el of els) {
+        for (let i = 0; i < el.count; i++) {
+          const rec = {};
+          for (const pr of el.props) {
+            if (pr.list) { const cnt = +tok[k++]; const ids = []; for (let j = 0; j < cnt; j++) ids.push(+tok[k++]); rec[pr.name] = ids; }
+            else rec[pr.name] = +tok[k++];
+          }
+          if (el.name === "vertex") pos.push(rec.x, rec.y, rec.z);
+          else if (el.name === "face") { const ids = rec.vertex_indices || rec.vertex_index || []; for (let j = 1; j + 1 < ids.length; j++) tri.push(ids[0], ids[j], ids[j + 1]); }
+        }
+      }
+    } else {
+      const dv = new DataView(buf);
+      let o = bodyStart;
+      const rd = type => {
+        let v;
+        switch (type) {
+          case "char": case "int8": v = dv.getInt8(o); break;
+          case "uchar": case "uint8": v = dv.getUint8(o); break;
+          case "short": case "int16": v = dv.getInt16(o, true); break;
+          case "ushort": case "uint16": v = dv.getUint16(o, true); break;
+          case "int": case "int32": v = dv.getInt32(o, true); break;
+          case "uint": case "uint32": v = dv.getUint32(o, true); break;
+          case "float": case "float32": v = dv.getFloat32(o, true); break;
+          default: v = dv.getFloat64(o, true);
+        }
+        o += SZ[type] || 4;
+        return v;
+      };
+      for (const el of els) {
+        const xi = el.props.findIndex(pr => pr.name === "x"), yi = el.props.findIndex(pr => pr.name === "y"), zi = el.props.findIndex(pr => pr.name === "z");
+        for (let i = 0; i < el.count; i++) {
+          let x = 0, y = 0, z = 0, ids = null;
+          el.props.forEach((pr, j) => {
+            if (pr.list) { const cnt = rd(pr.ct); const a = []; for (let m = 0; m < cnt; m++) a.push(rd(pr.it)); if (pr.name === "vertex_indices" || pr.name === "vertex_index") ids = a; }
+            else { const v = rd(pr.type); if (j === xi) x = v; else if (j === yi) y = v; else if (j === zi) z = v; }
+          });
+          if (el.name === "vertex") pos.push(x, y, z);
+          else if (el.name === "face" && ids) for (let j = 1; j + 1 < ids.length; j++) tri.push(ids[0], ids[j], ids[j + 1]);
+        }
+      }
+    }
+    const T = new Float32Array(tri.length * 3);
+    for (let k = 0; k < tri.length; k++) { const vi = tri[k] * 3; T[k * 3] = pos[vi]; T[k * 3 + 1] = pos[vi + 1]; T[k * 3 + 2] = pos[vi + 2]; }
+    return { tris: T, points: tri.length ? new Float32Array(0) : new Float32Array(pos) };
+  }
+  // Scanner apps often share OBJ exports as a ZIP with textures: take the model out of it.
+  async function unzipScan(buf) {
+    const dv = new DataView(buf), u8 = new Uint8Array(buf);
+    let eocd = -1;
+    for (let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    if (eocd < 0) throw new Error("That ZIP file couldn't be opened. Unzip it and load the model inside.");
+    const n = dv.getUint16(eocd + 10, true), entries = [];
+    let off = dv.getUint32(eocd + 16, true);
+    for (let k = 0; k < n && off + 46 <= buf.byteLength && dv.getUint32(off, true) === 0x02014b50; k++) {
+      const nl = dv.getUint16(off + 28, true);
+      entries.push({
+        name: new TextDecoder().decode(u8.subarray(off + 46, off + 46 + nl)),
+        method: dv.getUint16(off + 10, true), csize: dv.getUint32(off + 20, true), usize: dv.getUint32(off + 24, true), lho: dv.getUint32(off + 42, true),
+      });
+      off += 46 + nl + dv.getUint16(off + 30, true) + dv.getUint16(off + 32, true);
+    }
+    const rank = e => { const m = e.name.toLowerCase(); return m.includes("__macosx/") ? 9 : m.endsWith(".glb") ? 0 : m.endsWith(".obj") ? 1 : m.endsWith(".ply") ? 2 : 9; };
+    const pick = entries.filter(e => rank(e) < 9).sort((x, y) => rank(x) - rank(y) || y.usize - x.usize)[0];
+    if (!pick) throw new Error("There's no GLB, OBJ or PLY model in that ZIP.");
+    const lh = pick.lho, start = lh + 30 + dv.getUint16(lh + 26, true) + dv.getUint16(lh + 28, true);
+    let data = u8.subarray(start, start + pick.csize);
+    if (pick.method === 8) {
+      if (typeof DecompressionStream === "undefined") throw new Error("This browser can't open ZIP files. Unzip the scan and load the model inside.");
+      data = new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());
+    } else if (pick.method !== 0) throw new Error("That ZIP is packed in a way Pixel Machine can't open. Unzip it and load the model inside.");
+    return new File([data], pick.name.split("/").pop());
+  }
+  async function readScanFile(file) {
+    const name = file.name.toLowerCase();
+    const magic = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+    if (/\.usd[zac]?$/.test(name)) throw new Error("Pixel Machine can't read USDZ scans yet. Export the scan as GLB, OBJ or PLY instead.");
+    if (name.endsWith(".zip") || (magic[0] === 0x50 && magic[1] === 0x4b && magic[2] === 3 && magic[3] === 4)) {
+      const inner = await unzipScan(await file.arrayBuffer());
+      if (/\.zip$/i.test(inner.name)) throw new Error("There's no GLB, OBJ or PLY model in that ZIP.");
+      return readScanFile(inner);
+    }
+    if (name.endsWith(".glb")) return parseGLB(await file.arrayBuffer());
+    if (name.endsWith(".gltf")) return parseGLTF(await file.text());
+    if (name.endsWith(".obj")) return parseOBJ(await file.text());
+    if (name.endsWith(".ply")) return parsePLY(await file.arrayBuffer());
+    if (magic[0] === 0x67 && magic[1] === 0x6c && magic[2] === 0x54 && magic[3] === 0x46) return parseGLB(await file.arrayBuffer());
+    throw new Error("Pick a GLB, OBJ or PLY file (or a ZIP with one inside). LiDAR scanner apps can export these.");
+  }
+
+  // A small furnished room, so Space can be tried without a scan.
+  function sampleRoom() {
+    const T = [];
+    const quad = (a, b, c, d) => { T.push(...a, ...b, ...c, ...a, ...c, ...d); };
+    const box = (x0, y0, z0, x1, y1, z1) => {
+      const q = [[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]];
+      quad(q[0], q[3], q[2], q[1]); quad(q[4], q[5], q[6], q[7]); quad(q[0], q[4], q[7], q[3]);
+      quad(q[1], q[2], q[6], q[5]); quad(q[0], q[1], q[5], q[4]); quad(q[3], q[7], q[6], q[2]);
+    };
+    const W = 5.2, D = 4.2, H = 2.7;
+    quad([0, 0, 0], [W, 0, 0], [W, 0, D], [0, 0, D]);
+    quad([0, 0, 0], [0, H, 0], [W, H, 0], [W, 0, 0]);
+    quad([0, 0, 0], [0, 0, D], [0, H, D], [0, H, 0]);
+    quad([W, 0, 0], [W, H, 0], [W, H, D], [W, 0, D]);
+    quad([0, 0, D], [1.2, 0, D], [1.2, H, D], [0, H, D]);
+    quad([2.1, 0, D], [W, 0, D], [W, H, D], [2.1, H, D]);
+    quad([1.2, 2.1, D], [2.1, 2.1, D], [2.1, H, D], [1.2, H, D]);
+    quad([0, H, 0], [0, H, D], [W, H, D], [W, H, 0]);
+    box(0.3, 0, 0.25, 2.5, 0.42, 1.15); box(0.3, 0.42, 0.25, 2.5, 0.9, 0.45);
+    box(1.0, 0, 1.7, 2.2, 0.42, 2.4);
+    box(3.9, 0, 0.5, 4.5, 1.05, 1.1); box(4.05, 1.05, 0.65, 4.35, 1.5, 0.95);
+    box(4.2, 0, 2.6, 5.1, 0.75, 3.9);
+    return { tris: new Float32Array(T), points: new Float32Array(0) };
+  }
+
+  // Up axis, units and the scan's real extent (ignoring stray outlying points).
+  function prepareGeometry(raw) {
+    const zUp = state.spup === "z";
+    const conv = src => {
+      const out = new Float32Array(src.length);
+      for (let i = 0; i < src.length; i += 3) { const x = src[i], y = src[i + 1], z = src[i + 2]; out[i] = x; out[i + 1] = zUp ? z : y; out[i + 2] = zUp ? -y : z; }
+      return out;
+    };
+    const tris = conv(raw.tris), pts = conv(raw.points);
+    const n = (tris.length + pts.length) / 3;
+    if (!n) throw new Error("This file has no shapes Pixel Machine can use.");
+    // Turn the scan so its walls run along the pixel grid (scanner apps face them any way).
+    let sx = 0, sy = 0, sw = 0;
+    for (let t = 0; t < tris.length; t += 9) {
+      const e1x = tris[t + 3] - tris[t], e1y = tris[t + 4] - tris[t + 1], e1z = tris[t + 5] - tris[t + 2];
+      const e2x = tris[t + 6] - tris[t], e2y = tris[t + 7] - tris[t + 1], e2z = tris[t + 8] - tris[t + 2];
+      const nx = e1y * e2z - e1z * e2y, ny = e1z * e2x - e1x * e2z, nz = e1x * e2y - e1y * e2x, a = Math.hypot(nx, ny, nz);
+      if (a < 1e-12 || Math.abs(ny) > 0.35 * a) continue;
+      const th = 4 * Math.atan2(nz, nx);
+      sx += a * Math.cos(th); sy += a * Math.sin(th); sw += a;
+    }
+    const turn = sw > 0 && Math.hypot(sx, sy) > 0.25 * sw ? Math.atan2(sy, sx) / 4 : 0;
+    if (Math.abs(turn) > 0.002) {
+      const c = Math.cos(turn), sn = Math.sin(turn);
+      for (const arr of [tris, pts]) for (let i = 0; i < arr.length; i += 3) { const x = arr[i], z = arr[i + 2]; arr[i] = x * c + z * sn; arr[i + 2] = -x * sn + z * c; }
+    }
+    const step = Math.max(1, Math.floor(n / 150000)), xs = [], ys = [], zs = [];
+    for (const arr of [tris, pts]) for (let i = 0; i < arr.length; i += 3 * step) { xs.push(arr[i]); ys.push(arr[i + 1]); zs.push(arr[i + 2]); }
+    [xs, ys, zs].forEach(a => a.sort((u, v) => u - v));
+    const q = (a, f) => a[Math.min(a.length - 1, Math.max(0, Math.floor(f * (a.length - 1))))];
+    let min = [q(xs, 0.004), q(ys, 0.004), q(zs, 0.004)], max = [q(xs, 0.996), q(ys, 0.996), q(zs, 0.996)];
+    const big = Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2]);
+    let unit = 1;
+    if (big > 6000) unit = 0.001; else if (big > 60) unit = 0.01;
+    if (unit !== 1) {
+      for (const arr of [tris, pts]) for (let i = 0; i < arr.length; i++) arr[i] *= unit;
+      min = min.map(v => v * unit); max = max.map(v => v * unit);
+    }
+    const pad = Math.max(0.04, big * unit * 0.015);
+    const bounds = { min: min.map(v => v - pad), max: max.map(v => v + pad) };
+    bounds.size = [0, 1, 2].map(k => bounds.max[k] - bounds.min[k]);
+    return { tris, pts, bounds, inner: { min, max }, pad, unit };
+  }
+  // Turns the scan into cubes: on its surfaces ("cover") or in the air inside it ("fill").
+  function voxelize(g, sz, mode) {
+    // The grid is placed so the floor and two walls run through the middle of a layer of pixels,
+    // which keeps a slightly noisy scan surface one pixel thick.
+    const inv = 1 / sz, cells = Math.max(1, Math.ceil(g.pad * inv));
+    const org = g.inner.min.map(v => v - (cells + 0.5) * sz);
+    const dim = k => Math.max(1, Math.ceil((g.inner.max[k] + g.pad - org[k]) * inv));
+    const nx = dim(0), ny = dim(1), nz = dim(2), b = { min: org };
+    if (mode === "fill" && nx * ny * nz > SP_CAP.fill * 3) return { over: true };
+    const occ = new Set(), cap = mode === "cover" ? SP_CAP.cover : Infinity;
+    const add = (x, y, z) => {
+      const ix = Math.floor((x - b.min[0]) * inv), iy = Math.floor((y - b.min[1]) * inv), iz = Math.floor((z - b.min[2]) * inv);
+      if (ix < 0 || iy < 0 || iz < 0 || ix >= nx || iy >= ny || iz >= nz) return;
+      occ.add((iz * ny + iy) * nx + ix);
+    };
+    const T = g.tris;
+    for (let t = 0; t < T.length; t += 9) {
+      const ax = T[t], ay = T[t + 1], az = T[t + 2];
+      const e1x = T[t + 3] - ax, e1y = T[t + 4] - ay, e1z = T[t + 5] - az, e2x = T[t + 6] - ax, e2y = T[t + 7] - ay, e2z = T[t + 8] - az;
+      const len = Math.max(Math.hypot(e1x, e1y, e1z), Math.hypot(e2x, e2y, e2z), Math.hypot(e2x - e1x, e2y - e1y, e2z - e1z));
+      const m = Math.min(400, Math.max(1, Math.ceil(len * inv * 2)));
+      for (let i = 0; i <= m; i++) {
+        const u = i / m;
+        for (let j = 0; j <= m - i; j++) { const v = j / m; add(ax + e1x * u + e2x * v, ay + e1y * u + e2y * v, az + e1z * u + e2z * v); }
+      }
+      if (occ.size > cap) return { over: true };
+    }
+    const P = g.pts;
+    for (let i = 0; i < P.length; i += 3) { add(P[i], P[i + 1], P[i + 2]); if (occ.size > cap) return { over: true }; }
+    let keys;
+    if (mode === "cover") keys = [...occ];
+    else {
+      // The air inside the scanned volume: every free place within the scan's extent.
+      const lo = g.inner.min, hi = g.inner.max, span = k => [Math.max(0, Math.ceil((lo[k] - b.min[k]) * inv - 0.5)), Math.min([nx, ny, nz][k] - 1, Math.floor((hi[k] - b.min[k]) * inv - 0.5))];
+      const [x0, x1] = span(0), [y0, y1] = span(1), [z0, z1] = span(2);
+      keys = [];
+      for (let iz = z0; iz <= z1; iz++) for (let iy = y0; iy <= y1; iy++) for (let ix = x0; ix <= x1; ix++) {
+        const k = (iz * ny + iy) * nx + ix;
+        if (occ.has(k)) continue;
+        keys.push(k);
+        if (keys.length > SP_CAP.fill) return { over: true };
+      }
+    }
+    const centers = new Float32Array(keys.length * 3);
+    let o = 0;
+    for (const k of keys) {
+      const ix = k % nx, iy = Math.floor(k / nx) % ny, iz = Math.floor(k / (nx * ny));
+      centers[o++] = b.min[0] + (ix + 0.5) * sz;
+      centers[o++] = b.min[1] + (iy + 0.5) * sz;
+      centers[o++] = b.min[2] + (iz + 0.5) * sz;
+    }
+    return { centers, count: keys.length };
+  }
+  async function buildSpace(keepCamera) {
+    if (!space.raw || space.busy) return false;
+    space.busy = true;
+    spStatus("Filling the space with pixels…");
+    await wait(40);
+    let ok = false;
+    try {
+      space.geom = prepareGeometry(space.raw);
+      let sz = state.spsize, res = null;
+      for (let tries = 0; tries < 6; tries++) {
+        res = voxelize(space.geom, sz, state.spmode);
+        if (res && !res.over) break;
+        sz *= 2;
+      }
+      if (!res || res.over) throw new Error("This scan is too big for these pixels. Choose a bigger pixel size.");
+      space.centers = res.centers;
+      space.count = res.count;
+      space.size = sz;
+      const b = space.geom.bounds;
+      space.radius = 0.5 * Math.hypot(b.size[0], b.size[1], b.size[2]);
+      const T = space.geom.tris, nt = T.length / 9, keep = Math.max(1, Math.ceil(nt / 600000));
+      if (keep === 1) space.scanPos = T;
+      else {
+        const out = new Float32Array(Math.floor(nt / keep) * 9);
+        for (let t = 0, o = 0; t < nt && o < out.length; t += keep, o += 9) out.set(T.subarray(t * 9, t * 9 + 9), o);
+        space.scanPos = out;
+      }
+      space.dirty = true;
+      space.active = true;
+      if (!keepCamera) { space.yaw = 0.75; space.pitch = state.spview === "inside" ? 0 : 0.62; space.dist = 1.55; space.turn = 0; }
+      const notes = [];
+      if (Math.abs(sz - state.spsize) > 1e-9) notes.push(`The pixels are ${Math.round(sz * 100)} cm, the smallest this scan allows.`);
+      if (space.geom.unit !== 1) notes.push(`The scan was in ${space.geom.unit === 0.01 ? "centimetres" : "millimetres"}, so it was scaled to metres.`);
+      spStatus(notes.join(" "));
+      ok = true;
+    } catch (e) {
+      spStatus(e && e.message ? e.message : "The scan couldn't be read.");
+    }
+    space.busy = false;
+    view.z = 1; view.x = view.y = 0.5;
+    layout();
+    changed();
+    return ok;
+  }
+  async function loadScan(file) {
+    if (!gl) { spStatus("Space needs WebGL 2, which this browser doesn't offer."); return; }
+    if (file.size > 400 * 1024 * 1024) { spStatus("That scan is over 400 MB. Export it at a lower detail level."); return; }
+    spStatus(`Reading ${file.name}…`);
+    await wait(40);
+    try {
+      space.raw = await readScanFile(file);
+      space.name = file.name.replace(/\.[^.]+$/, "");
+    } catch (e) {
+      spStatus(e && e.message ? e.message : "That file couldn't be read as a scan.");
+      return;
+    }
+    await buildSpace(false);
+  }
+
+  // ----- drawing Space on the GPU -----
+  const SP_NOISE = `
+uint h3(ivec3 c, uint s) {
+  uint h = (uint(c.x) * 0x27d4eb2du) ^ (uint(c.y) * 0x165667b1u) ^ (uint(c.z) * 0x9e3779b1u) ^ s;
+  h = (h ^ (h >> 15u)) * 0x85ebca6bu;
+  h = (h ^ (h >> 13u)) * 0xc2b2ae35u;
+  return h ^ (h >> 16u);
+}
+float vn3(vec3 p, uint s) {
+  vec3 i = floor(p), f = p - i;
+  f = f * f * (3.0 - 2.0 * f);
+  ivec3 b = ivec3(i);
+  float a0 = float(h3(b, s)), a1 = float(h3(b + ivec3(1, 0, 0), s)), a2 = float(h3(b + ivec3(0, 1, 0), s)), a3 = float(h3(b + ivec3(1, 1, 0), s));
+  float b0 = float(h3(b + ivec3(0, 0, 1), s)), b1 = float(h3(b + ivec3(1, 0, 1), s)), b2 = float(h3(b + ivec3(0, 1, 1), s)), b3 = float(h3(b + ivec3(1, 1, 1), s));
+  float v = mix(mix(mix(a0, a1, f.x), mix(a2, a3, f.x), f.y), mix(mix(b0, b1, f.x), mix(b2, b3, f.x), f.y), f.z);
+  return v / 2147483648.0 - 1.0;
+}
+vec3 n3v(vec3 p) { return vec3(vn3(p, 11u), vn3(p + 31.7, 23u), vn3(p - 17.3, 37u)); }`;
+  const SP_FIELD_FS = `#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+uniform sampler2D uPos;
+uniform int uCount, uL, uBeatN, uGrowOrder, uMode;
+uniform vec3 uCore, uOff1, uOff2;
+uniform float uR, uGam, uWarp, uNoiseF, uRipple, uT, uDeepen, uGrain, uShimmer, uGrow, uCutY, uDensity;
+uniform vec2 uBeats[6];
+uniform vec2 uYRange;
+uniform uint uShimmerSeed;
+out vec4 o;
+${SP_NOISE}
+void main() {
+  ivec2 ij = ivec2(gl_FragCoord.xy);
+  int i = ij.y * 1024 + ij.x;
+  o = vec4(0.0);
+  if (i >= uCount) return;
+  vec4 P = texelFetch(uPos, ij, 0);
+  vec3 p = P.xyz;
+  if (p.y > uCutY) return;
+  vec3 q = p;
+  if (uWarp > 0.0) q += uWarp * (0.7 * n3v(p * uNoiseF + uOff1) + 0.3 * n3v(p * uNoiseF * 2.1 + uOff2));
+  float d = length(q - uCore) / uR;
+  if (uGam != 1.0 && d > 0.0) d = pow(d, uGam);
+  if (uGrow < 1.0) {
+    float key;
+    if (uGrowOrder == 2) key = float(h3(ivec3(i, 5, 9), 0x9e3779b9u)) / 4294967296.0;
+    else if (uGrowOrder == 3) key = clamp((p.y - uYRange.x) / max(uYRange.y, 0.001), 0.0, 1.0) * 0.94 + P.w * 0.06;
+    else key = clamp(d, 0.0, 1.25) / 1.25 * 0.93 + P.w * 0.07;
+    if (key > uGrow) return;
+  }
+  if (uRipple > 0.0) d += uRipple * sin(d * 19.0 - uT * 2.2);
+  for (int k = 0; k < 6; k++) {
+    if (k >= uBeatN) break;
+    float x = (d - uBeats[k].x * 0.55) / 0.05;
+    d -= uBeats[k].y * exp(-x * x);
+  }
+  d -= uDeepen;
+  d += uGrain * (P.w - 0.5);
+  if (uShimmer > 0.0) d += uShimmer * (float(h3(ivec3(i, 7, 3), uShimmerSeed)) / 4294967296.0 - 0.5);
+  d = clamp(d, -1.0, 2.0);
+  int lv = clamp(int(floor(d * float(uL))), 0, uL - 1);
+  float vis = 1.0;
+  if (uMode == 2) {
+    float h2 = float(h3(ivec3(i, 1, 2), 77u)) / 4294967296.0;
+    float dens = uDensity * pow(1.0 - float(lv) / float(max(uL - 1, 1)), 1.5);
+    vis = (lv < uL - 1 && h2 < dens) ? 1.0 : 0.0;
+  }
+  o = vec4(float(lv) / 255.0, vis, 0.0, 1.0);
+}`;
+  const SP_CUBE_VS = `#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec3 aNrm;
+uniform sampler2D uPos;
+uniform sampler2D uField;
+uniform mat4 uVP;
+uniform float uSize, uClear;
+uniform vec3 uLut[32], uEye;
+out vec3 vCol, vLoc, vNrm;
+void main() {
+  ivec2 ij = ivec2(gl_InstanceID % 1024, gl_InstanceID / 1024);
+  vec4 f = texelFetch(uField, ij, 0);
+  vec3 c = texelFetch(uPos, ij, 0).xyz;
+  // Standing inside: the pixels right around the eye shrink away.
+  float k = uClear > 0.0 ? smoothstep(uClear, uClear * 2.2, distance(c, uEye)) : 1.0;
+  vLoc = aPos; vNrm = aNrm;
+  if (f.g < 0.5 || k <= 0.0) { gl_Position = vec4(0.0, 0.0, 2.0, 1.0); vCol = vec3(0.0); return; }
+  int lv = int(f.r * 255.0 + 0.5);
+  gl_Position = uVP * vec4(c + aPos * uSize * k, 1.0);
+  float shade = 0.76 + 0.18 * max(dot(aNrm, normalize(vec3(0.4, 0.9, 0.3))), 0.0) + 0.06 * aNrm.y;
+  vCol = uLut[lv] * shade;
+}`;
+  const SP_CUBE_FS = `#version 300 es
+precision highp float;
+in vec3 vCol, vLoc, vNrm;
+out vec4 o;
+void main() {
+  // A soft line where pixels meet, fading out when they are tiny on screen.
+  vec3 a = abs(vLoc) * 2.0;
+  vec2 uv = abs(vNrm.x) > 0.5 ? a.yz : (abs(vNrm.y) > 0.5 ? a.xz : a.xy);
+  float e = max(uv.x, uv.y), w = fwidth(e);
+  float line = smoothstep(0.92 - w, 0.92 + w, e) * clamp(1.6 - w * 5.0, 0.0, 1.0);
+  o = vec4(vCol * (1.0 - 0.13 * line), 1.0);
+}`;
+  const SP_SCAN_VS = `#version 300 es
+precision highp float;
+layout(location = 0) in vec3 aPos;
+uniform mat4 uVP;
+out vec3 vW;
+void main() { vW = aPos; gl_Position = uVP * vec4(aPos, 1.0); }`;
+  const SP_SCAN_FS = `#version 300 es
+precision highp float;
+in vec3 vW;
+uniform vec3 uCol, uEye, uLo, uHi;
+uniform float uCutY, uOpen;
+out vec4 o;
+void main() {
+  if (vW.y > uCutY) discard;
+  // Dollhouse view: the walls nearest the eye open up, so the pixels inside can be seen.
+  if (uOpen > 0.0 && vW.y > uLo.y + uOpen && ((uEye.x > uHi.x && vW.x > uHi.x - uOpen) || (uEye.x < uLo.x && vW.x < uLo.x + uOpen) || (uEye.z > uHi.z && vW.z > uHi.z - uOpen) || (uEye.z < uLo.z && vW.z < uLo.z + uOpen))) discard;
+  vec3 n = normalize(cross(dFdx(vW), dFdy(vW)));
+  o = vec4(uCol * (0.55 + 0.45 * abs(dot(n, normalize(vec3(0.35, 0.9, 0.25))))), 1.0);
+}`;
+  function spProgram(vsSrc, fsSrc) {
+    const mk = (type, src) => {
+      const sh = gl.createShader(type);
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { console.warn(gl.getShaderInfoLog(sh)); return null; }
+      return sh;
+    };
+    const v = mk(gl.VERTEX_SHADER, vsSrc), f = mk(gl.FRAGMENT_SHADER, fsSrc);
+    if (!v || !f) return null;
+    const pr = gl.createProgram();
+    gl.attachShader(pr, v);
+    gl.attachShader(pr, f);
+    gl.linkProgram(pr);
+    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) { console.warn(gl.getProgramInfoLog(pr)); return null; }
+    return pr;
+  }
+  function cubeGeometry() {
+    const C = [[-0.5, -0.5, -0.5], [0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [-0.5, 0.5, -0.5], [-0.5, -0.5, 0.5], [0.5, -0.5, 0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5]];
+    const F = [[0, 3, 2, 1, [0, 0, -1]], [4, 5, 6, 7, [0, 0, 1]], [0, 4, 7, 3, [-1, 0, 0]], [1, 2, 6, 5, [1, 0, 0]], [0, 1, 5, 4, [0, -1, 0]], [3, 7, 6, 2, [0, 1, 0]]];
+    const out = [];
+    for (const [a, b, c, d, n] of F) for (const vi of [a, b, c, a, c, d]) out.push(...C[vi], ...n);
+    return new Float32Array(out);
+  }
+  function ensureSpaceGL() {
+    if (!gl || glLost || !space.centers) return false;
+    if (!space.gl) {
+      const field = spProgram(VS, SP_FIELD_FS), cube = spProgram(SP_CUBE_VS, SP_CUBE_FS), scan = spProgram(SP_SCAN_VS, SP_SCAN_FS);
+      if (!field || !cube || !scan) { spStatus("This device can't draw the 3D space."); space.active = false; return false; }
+      const loc = (pr, names) => { const o = {}; names.forEach(n => { o[n] = gl.getUniformLocation(pr, n); }); return o; };
+      const G = {
+        field, cube, scan,
+        Uf: loc(field, ["uPos", "uCount", "uL", "uBeatN", "uGrowOrder", "uMode", "uCore", "uOff1", "uOff2", "uR", "uGam", "uWarp", "uNoiseF", "uRipple", "uT", "uDeepen", "uGrain", "uShimmer", "uGrow", "uCutY", "uDensity", "uBeats", "uYRange", "uShimmerSeed"]),
+        Uc: loc(cube, ["uPos", "uField", "uVP", "uSize", "uLut", "uEye", "uClear"]),
+        Us: loc(scan, ["uVP", "uCol", "uCutY", "uEye", "uLo", "uHi", "uOpen"]),
+        posTex: gl.createTexture(), fieldTex: gl.createTexture(), fieldFbo: gl.createFramebuffer(),
+        cubeVao: gl.createVertexArray(), scanVao: gl.createVertexArray(), scanVbo: gl.createBuffer(), texH: 1, scanCount: 0,
+      };
+      gl.bindVertexArray(G.cubeVao);
+      const cv = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, cv);
+      gl.bufferData(gl.ARRAY_BUFFER, cubeGeometry(), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+      gl.enableVertexAttribArray(1);
+      gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
+      gl.bindVertexArray(G.scanVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, G.scanVbo);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 12, 0);
+      gl.bindVertexArray(quadVao);
+      for (const [tex, unit] of [[G.posTex, gl.TEXTURE3], [G.fieldTex, gl.TEXTURE4]]) {
+        gl.activeTexture(unit);
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      }
+      gl.activeTexture(gl.TEXTURE0);
+      space.gl = G;
+      space.dirty = true;
+    }
+    if (space.dirty) {
+      const G = space.gl, W = 1024, H = Math.max(1, Math.ceil(space.count / W));
+      const data = new Float32Array(W * H * 4), rnd = mulberry(0x51ce ^ space.count);
+      for (let i = 0; i < space.count; i++) {
+        data[i * 4] = space.centers[i * 3]; data[i * 4 + 1] = space.centers[i * 3 + 1]; data[i * 4 + 2] = space.centers[i * 3 + 2]; data[i * 4 + 3] = rnd();
+      }
+      gl.activeTexture(gl.TEXTURE3);
+      gl.bindTexture(gl.TEXTURE_2D, G.posTex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, W, H, 0, gl.RGBA, gl.FLOAT, data);
+      gl.activeTexture(gl.TEXTURE4);
+      gl.bindTexture(gl.TEXTURE_2D, G.fieldTex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, G.fieldFbo);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, G.fieldTex, 0);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      G.texH = H;
+      gl.bindBuffer(gl.ARRAY_BUFFER, G.scanVbo);
+      gl.bufferData(gl.ARRAY_BUFFER, space.scanPos, gl.STATIC_DRAW);
+      G.scanCount = space.scanPos.length / 3;
+      space.dirty = false;
+    }
+    return true;
+  }
+  const spaceCutY = s => { const b = space.geom.bounds; return s.spview === "inside" ? b.max[1] + 1 : b.max[1] - b.size[1] * s.spcut / 100; };
+  // Works out every cube's tone for this frame, one texel per cube.
+  function spaceFieldPass(P, s) {
+    const G = space.gl, U = G.Uf, b = space.geom.bounds, R = space.radius;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, G.fieldFbo);
+    gl.viewport(0, 0, 1024, G.texH);
+    gl.disable(gl.DEPTH_TEST);
+    gl.useProgram(G.field);
+    gl.bindVertexArray(quadVao);
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, G.posTex);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(U.uPos, 3);
+    let core = [b.min[0] + b.size[0] * s.spcx / 100, b.min[1] + b.size[1] * s.spcy / 100, b.min[2] + b.size[2] * s.spcz / 100];
+    if (motionSet(s).has("drift")) { const o = driftOffset(0, P.t, s.strength / 100); core = [core[0] + o[0] * R * 0.6, core[1], core[2] + o[1] * R * 0.6]; }
+    const t = P.t, fl = P.flow > 0 ? 1 : 0, mo = P.morph || [0, 0];
+    gl.uniform1i(U.uCount, space.count);
+    gl.uniform3f(U.uCore, core[0], core[1], core[2]);
+    gl.uniform1f(U.uR, Math.max(0.05, R * (s.spspread / 100) * (P.reach / Math.max(0.01, s.reach / 100))));
+    gl.uniform1f(U.uGam, P.gam);
+    gl.uniform1i(U.uL, P.L);
+    gl.uniform1f(U.uWarp, (P.warp + P.flow) * R * 0.32);
+    gl.uniform1f(U.uNoiseF, 1.8 / R);
+    gl.uniform3f(U.uOff1, 0.31 + t * 0.06 * fl + mo[0] * 8, 0.17 + mo[1] * 8, 0.53 - t * 0.04 * fl);
+    gl.uniform3f(U.uOff2, 0.71 - t * 0.05 * fl, 0.29 + t * 0.03 * fl, 0.13);
+    gl.uniform1f(U.uRipple, P.ripple);
+    gl.uniform1f(U.uT, t);
+    gl.uniform1f(U.uDeepen, P.deepen || 0);
+    gl.uniform1i(U.uBeatN, P.beatN || 0);
+    if (P.beatN) gl.uniform2fv(U.uBeats, P.beats);
+    gl.uniform1f(U.uGrain, s.grain / 100 * 0.12);
+    gl.uniform1f(U.uShimmer, P.shimmer);
+    gl.uniform1ui(U.uShimmerSeed, P.shimmerSeed);
+    gl.uniform1f(U.uGrow, P.grow == null ? 2 : P.grow);
+    gl.uniform1i(U.uGrowOrder, P.growOrder || 1);
+    gl.uniform2f(U.uYRange, b.min[1], b.size[1]);
+    gl.uniform1f(U.uCutY, spaceCutY(s));
+    gl.uniform1i(U.uMode, s.spmode === "fill" ? 2 : 1);
+    gl.uniform1f(U.uDensity, s.spdens / 100);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  function spaceVP(aspect, s, turn, flip) {
+    const b = space.geom.bounds, R = space.radius;
+    const c = [b.min[0] + b.size[0] / 2, b.min[1] + b.size[1] * 0.42, b.min[2] + b.size[2] / 2];
+    const rate = s.spturn ? 0.15 * Math.max(0.1, s.speed / 40) : 0;
+    const yaw = space.yaw + space.turn + (turn != null ? turn * rate : 0), pitch = space.pitch;
+    let eye, target, fov;
+    if (s.spview === "inside") {
+      // Stand toward one side of the room, looking across it.
+      eye = [c[0] - 0.55 * b.size[0] / 2 * Math.sin(0.75), b.min[1] + Math.min(1.6, b.size[1] * 0.6), c[2] - 0.55 * b.size[2] / 2 * Math.cos(0.75)];
+      target = [eye[0] + Math.cos(pitch) * Math.sin(yaw), eye[1] + Math.sin(pitch), eye[2] + Math.cos(pitch) * Math.cos(yaw)];
+      fov = Math.max(25, Math.min(105, 75 * space.dist / 1.55));
+    } else {
+      const d = space.dist * R;
+      eye = [c[0] + d * Math.cos(pitch) * Math.sin(yaw), c[1] + d * Math.sin(pitch), c[2] + d * Math.cos(pitch) * Math.cos(yaw)];
+      target = c;
+      fov = 50;
+    }
+    const proj = m4.persp(fov * Math.PI / 180, aspect, Math.max(0.01, R * 0.004), R * 30);
+    if (flip) { proj[1] = -proj[1]; proj[5] = -proj[5]; proj[9] = -proj[9]; proj[13] = -proj[13]; }
+    return { vp: new Float32Array(m4.mul(proj, m4.lookAt(eye, target, [0, 1, 0]))), eye };
+  }
+  function drawSpace(P, tgt) {
+    if (!ensureSpaceGL()) return;
+    const s = tgt.snap || state, G = space.gl;
+    spaceFieldPass(P, s);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, tgt.fb || null);
+    gl.viewport(0, 0, tgt.w, tgt.h);
+    gl.clearColor(0.047, 0.055, 0.067, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    const cam = spaceVP(tgt.w / tgt.h, s, tgt.turn, tgt.flip), VP = cam.vp;
+    // The pixels first, then the scan, so hidden parts of the scan cost nothing.
+    gl.useProgram(G.cube);
+    gl.uniformMatrix4fv(G.Uc.uVP, false, VP);
+    gl.uniform1f(G.Uc.uSize, space.size);
+    gl.uniform3f(G.Uc.uEye, cam.eye[0], cam.eye[1], cam.eye[2]);
+    gl.uniform1f(G.Uc.uClear, s.spview === "inside" ? Math.max(s.spmode === "fill" ? 0.55 : 0.25, space.size * 4) : 0);
+    gl.uniform3fv(G.Uc.uLut, tgt.lut || lutF);
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, G.posTex);
+    gl.activeTexture(gl.TEXTURE4);
+    gl.bindTexture(gl.TEXTURE_2D, G.fieldTex);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(G.Uc.uPos, 3);
+    gl.uniform1i(G.Uc.uField, 4);
+    gl.bindVertexArray(G.cubeVao);
+    gl.enable(gl.CULL_FACE);
+    gl.frontFace(tgt.flip ? gl.CW : gl.CCW);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, space.count);
+    gl.disable(gl.CULL_FACE);
+    gl.frontFace(gl.CCW);
+    if (s.spscan && G.scanCount) {
+      const inn = space.geom.inner, open = s.spmode === "fill" && s.spview !== "inside";
+      gl.useProgram(G.scan);
+      gl.uniformMatrix4fv(G.Us.uVP, false, VP);
+      gl.uniform3f(G.Us.uCol, 0.3, 0.33, 0.37);
+      gl.uniform1f(G.Us.uCutY, spaceCutY(s));
+      gl.uniform3f(G.Us.uEye, cam.eye[0], cam.eye[1], cam.eye[2]);
+      gl.uniform3f(G.Us.uLo, inn.min[0], inn.min[1], inn.min[2]);
+      gl.uniform3f(G.Us.uHi, inn.max[0], inn.max[1], inn.max[2]);
+      gl.uniform1f(G.Us.uOpen, open ? Math.max(0.12, 0.03 * Math.max(...space.geom.bounds.size)) : 0);
+      gl.bindVertexArray(G.scanVao);
+      gl.drawArrays(gl.TRIANGLES, 0, G.scanCount);
+    }
+    gl.disable(gl.DEPTH_TEST);
+    gl.bindVertexArray(quadVao);
+  }
+  async function buildSpacePNG() {
+    const a = Dw / Dh, lim = Math.min(3000, gl.getParameter(gl.MAX_TEXTURE_SIZE));
+    let Ew = lim, Eh = Math.round(lim / a);
+    if (Eh > lim) { Eh = lim; Ew = Math.round(lim * a); }
+    ensureFbo(Ew, Eh);
+    const P = fieldParams(state, time, true, { audio: liveAudio(), pulses: livePulses(), grow: growNow() });
+    drawSpace(P, { fb: fbo, w: Ew, h: Eh, flip: true });
+    const buf = new Uint8Array(Ew * Eh * 4);
+    gl.readPixels(0, 0, Ew, Eh, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    needsDraw = true;
+    const c = document.createElement("canvas");
+    c.width = Ew; c.height = Eh;
+    c.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(buf.buffer), Ew, Eh), 0, 0);
+    const blob = await new Promise(res => c.toBlob(res, "image/png"));
+    return { blob, dm: { cols: Ew, rows: Eh } };
+  }
+
+  // ----- looking around -----
+  const spPtrs = new Map();
+  function spacePointer(e, kind) {
+    if (kind === "down") { try { art.setPointerCapture(e.pointerId); } catch (er) { /* ignore */ } spPtrs.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now(), solo: spPtrs.size === 0 }); return; }
+    if (kind === "up") {
+      const pr = spPtrs.get(e.pointerId);
+      spPtrs.delete(e.pointerId);
+      if (pr && pr.solo && !spPtrs.size && touchOn() && performance.now() - pr.t0 < 350 && Math.hypot(e.clientX - pr.x0, e.clientY - pr.y0) < 8) firePulse(state.tstrength / 50);
+      return;
+    }
+    const pr = spPtrs.get(e.pointerId);
+    if (!pr) return;
+    if (spPtrs.size >= 2) {
+      const other = [...spPtrs.entries()].find(([id]) => id !== e.pointerId)[1];
+      const d0 = Math.hypot(pr.x - other.x, pr.y - other.y), d1 = Math.hypot(e.clientX - other.x, e.clientY - other.y);
+      if (d0 > 1 && d1 > 1) space.dist = Math.max(0.15, Math.min(6, space.dist * d0 / d1));
+    } else {
+      const inside = state.spview === "inside";
+      space.yaw += (e.clientX - pr.x) * (inside ? 0.005 : -0.006);
+      space.pitch = Math.max(inside ? -1.3 : -0.15, Math.min(inside ? 1.3 : 1.45, space.pitch + (e.clientY - pr.y) * (inside ? -0.005 : 0.005)));
+    }
+    pr.x = e.clientX;
+    pr.y = e.clientY;
+    needsDraw = true;
+  }
+
+  // ----- AR: USDZ for AR Quick Look on iPhone and iPad -----
+  function buildUSDA(groups) {
+    const b = space.geom.bounds, cx = b.min[0] + b.size[0] / 2, cz = b.min[2] + b.size[2] / 2, h = space.size * 0.47;
+    // The lowest pixels stand on the floor of the real room.
+    let y0 = Infinity;
+    groups.forEach(ids => { if (ids) for (const i of ids) y0 = Math.min(y0, space.centers[i * 3 + 1] - h); });
+    const f = v => String(Math.round(v * 10000) / 10000);
+    const lin = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+    const FACES = [0, 3, 2, 1, 4, 5, 6, 7, 0, 4, 7, 3, 1, 2, 6, 5, 0, 1, 5, 4, 3, 7, 6, 2];
+    const CORN = [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]];
+    const used = [];
+    groups.forEach((ids, lv) => { if (ids && ids.length) used.push(lv); });
+    const out = ["#usda 1.0", "(", '    defaultPrim = "PixelMachine"', "    metersPerUnit = 1", '    upAxis = "Y"', `    doc = "Pixel Machine by Argiris Ser, Study No. ${state.seed}, 2026"`, ")", "", 'def Xform "PixelMachine"', "{", '    def Scope "Materials"', "    {"];
+    for (const lv of used) {
+      out.push(`        def Material "Tone${lv}"`, "        {",
+        `            token outputs:surface.connect = </PixelMachine/Materials/Tone${lv}/Surface.outputs:surface>`,
+        '            def Shader "Surface"', "            {", '                uniform token info:id = "UsdPreviewSurface"',
+        `                color3f inputs:diffuseColor = (${f(lin(lut.r[lv]))}, ${f(lin(lut.g[lv]))}, ${f(lin(lut.b[lv]))})`,
+        "                float inputs:roughness = 0.85", "                float inputs:metallic = 0", "                token outputs:surface", "            }", "        }");
+    }
+    out.push("    }");
+    for (const lv of used) {
+      const ids = groups[lv], pts = [], idx = [], cnt = [];
+      ids.forEach((i, n) => {
+        const x = space.centers[i * 3] - cx, y = space.centers[i * 3 + 1] - y0, z = space.centers[i * 3 + 2] - cz;
+        for (const c of CORN) pts.push(`(${f(x + c[0] * h)}, ${f(y + c[1] * h)}, ${f(z + c[2] * h)})`);
+        for (let k = 0; k < 24; k++) idx.push(n * 8 + FACES[k]);
+        for (let k = 0; k < 6; k++) cnt.push(4);
+      });
+      out.push(`    def Mesh "Tone${lv}Pixels" (`, '        prepend apiSchemas = ["MaterialBindingAPI"]', "    )", "    {",
+        `        int[] faceVertexCounts = [${cnt.join(", ")}]`, `        int[] faceVertexIndices = [${idx.join(", ")}]`,
+        `        point3f[] points = [${pts.join(", ")}]`, `        rel material:binding = </PixelMachine/Materials/Tone${lv}>`,
+        '        uniform token subdivisionScheme = "none"', "    }");
+    }
+    out.push("}", "");
+    return out.join("\n");
+  }
+  // USDZ is an uncompressed ZIP whose files start on 64-byte boundaries.
+  function makeUsdz(files) {
+    const enc = new TextEncoder(), parts = [], central = [];
+    let offset = 0;
+    for (const f of files) {
+      const name = enc.encode(f.name), crc = crc32(f.data), size = f.data.length;
+      const pad = (64 - ((offset + 30 + name.length + 4) % 64)) % 64;
+      const extra = new Uint8Array(4 + pad), ev = new DataView(extra.buffer);
+      ev.setUint16(0, 0x3039, true);
+      ev.setUint16(2, pad, true);
+      const lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(8, 0, true);
+      lh.setUint32(14, crc, true); lh.setUint32(18, size, true); lh.setUint32(22, size, true);
+      lh.setUint16(26, name.length, true); lh.setUint16(28, extra.length, true);
+      parts.push(new Uint8Array(lh.buffer), name, extra, f.data);
+      const ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true);
+      ch.setUint32(16, crc, true); ch.setUint32(20, size, true); ch.setUint32(24, size, true);
+      ch.setUint16(28, name.length, true); ch.setUint32(42, offset, true);
+      central.push(new Uint8Array(ch.buffer), name);
+      offset += 30 + name.length + extra.length + size;
+    }
+    const cdSize = central.reduce((a, b) => a + b.length, 0), end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+    return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: "model/vnd.usdz+zip" });
+  }
+  function openQuickLook(blob) {
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.rel = "ar";
+    a.href = url;
+    a.download = "pixel-machine.usdz";
+    a.appendChild(document.createElement("img"));
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 120000);
+  }
+  async function saveUSDZ(ar) {
+    if (!space.active || !ensureSpaceGL()) return;
+    spStatus("Building the AR file…");
+    await wait(40);
+    try {
+      const P = fieldParams(state, time, true, { audio: liveAudio(), pulses: livePulses(), grow: growNow() });
+      spaceFieldPass(P, state);
+      const W = 1024, H = space.gl.texH, buf = new Uint8Array(W * H * 4);
+      gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      needsDraw = true;
+      const groups = [];
+      let total = 0;
+      for (let i = 0; i < space.count; i++) {
+        if (buf[i * 4 + 1] < 128) continue;
+        const lv = buf[i * 4];
+        (groups[lv] = groups[lv] || []).push(i);
+        total++;
+      }
+      if (!total) throw new Error("No pixels are showing right now, so there's nothing to place in AR.");
+      if (total > SP_CAP.ar) throw new Error(`${fmt(total)} pixels is too many for AR. Choose a bigger pixel size, or lower the density.`);
+      const blob = makeUsdz([{ name: "pixel-machine.usda", data: new TextEncoder().encode(buildUSDA(groups)) }]);
+      if (ar && arSupported && !inClaude) { openQuickLook(blob); spStatus(`Opening AR with ${fmt(total)} pixels…`); }
+      else {
+        spStatus("Confirm the save in the prompt.");
+        const ok = await saveFile(`${fileBase()}-space.usdz`, blob, spStatus);
+        if (ok) spStatus(`Saved the AR file with ${fmt(total)} pixels. On an iPhone or iPad, open it to place it in the room.`);
+        else if (inClaude) spStatus(`${$("sp-status").textContent} The website version can save AR files: ${APP_URL}`);
+      }
+    } catch (e) {
+      spStatus(e && e.message ? e.message : "The AR file couldn't be made.");
+    }
+  }
+
+  // ----- Space panel -----
+  function updateSpaceUI() {
+    $("sp-controls").hidden = !space.active;
+    $("sp-reopen").hidden = space.active || !space.centers;
+    const press = (sel, v) => document.querySelectorAll(sel).forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(v))));
+    press("#sp-mode button", state.spmode);
+    press("#sp-size button", state.spsize);
+    press("#sp-view button", state.spview);
+    press("#sp-up button", state.spup);
+    const tog = (id, on) => { const b = $(id); b.setAttribute("aria-pressed", String(on)); b.textContent = on ? "On" : "Off"; };
+    tog("sp-turn", state.spturn);
+    tog("sp-scan", state.spscan);
+    ["spspread", "spdens", "spcx", "spcy", "spcz", "spcut"].forEach(id => { $(id + "-out").textContent = state[id] + "%"; });
+    $("spdens-row").hidden = state.spmode !== "fill";
+    $("spcut-row").hidden = state.spview === "inside";
+    $("sp-ar").hidden = !arSupported || !space.active || inClaude;
+    $("sp-info").textContent = space.active ? `${space.name.charAt(0).toUpperCase() + space.name.slice(1)}: ${fmt(space.count)} places for pixels, ${Math.round(space.size * 100)} cm each.` : "";
+  }
+  $("sp-load").addEventListener("click", () => $("sp-file").click());
+  $("sp-file").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) loadScan(f); });
+  $("sp-demo").addEventListener("click", () => {
+    if (!gl) { spStatus("Space needs WebGL 2, which this browser doesn't offer."); return; }
+    space.raw = sampleRoom();
+    space.name = "the sample room";
+    buildSpace(false);
+  });
+  $("sp-reopen").addEventListener("click", () => { if (space.centers) { space.active = true; layout(); changed(); } });
+  $("sp-close").addEventListener("click", () => { space.active = false; spPtrs.clear(); layout(); changed(); });
+  document.querySelectorAll("#sp-mode button").forEach(b => b.addEventListener("click", () => { if (state.spmode === b.dataset.v) return; state.spmode = b.dataset.v; buildSpace(true); }));
+  document.querySelectorAll("#sp-size button").forEach(b => b.addEventListener("click", () => { state.spsize = +b.dataset.v; buildSpace(true); }));
+  document.querySelectorAll("#sp-up button").forEach(b => b.addEventListener("click", () => { if (state.spup === b.dataset.v) return; state.spup = b.dataset.v; buildSpace(false); }));
+  document.querySelectorAll("#sp-view button").forEach(b => b.addEventListener("click", () => {
+    state.spview = b.dataset.v;
+    space.pitch = state.spview === "inside" ? 0 : 0.62;
+    space.dist = 1.55;
+    updateSpaceUI();
+    changed();
+  }));
+  $("sp-turn").addEventListener("click", () => { state.spturn = !state.spturn; changed(); });
+  $("sp-scan").addEventListener("click", () => { state.spscan = !state.spscan; changed(); });
+  $("sp-usdz").addEventListener("click", () => saveUSDZ(false));
+  $("sp-ar").addEventListener("click", () => saveUSDZ(true));
 
   // ---------- quick links ----------
   function jumpTo(id) {

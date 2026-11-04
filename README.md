@@ -22,13 +22,43 @@ Once installed it opens in its own window and works offline.
 
 ## What it does
 
+**Make**
+
 - Grids from 20 to 5000 squares along the long side, in square, portrait, story, wide, panorama and banner formats
 - Palettes sampled from the original studies, plus custom hues
 - Movement: flow, morph, drift, breathe, ripple, swirl, wave and shimmer, in any combination
 - Music: load a song and the work pulses, sends rings out on the beat, surges and sparkles with it
 - Touch and mouse play: ripple, swirl, push and ink
 - Exhibition mode: full screen, controls hidden, the screen kept awake
+- Growth: the study builds itself square by square, from the core, scattered or row by row, once or on a loop
+
+**Interact**
+- Camera: visitors' movement darkens, lightens, pushes or ripples the field
+- Listen to the room: the microphone hears voices, clapping or a live band
+- Live performance: MIDI knobs (map any slider), keys and pads fire rings, keyboard shortcuts, and an output window for a projector or second screen
+
+Camera and microphone are processed on the device. Nothing is recorded, saved or sent.
+
+**Show and save**
 - Saves PNGs and MP4 videos (slow motion to time-lapse, up to 4K, with the song's sound)
+- Print: A4 to A1 and square or poster sizes in cm, border, signature line, 150 or 300 dpi PNG, plus PDF and SVG vector files with one layer per tone
+- TV: a TV link, 4K screensaver images and seamless TV loop videos
+
+## On a TV or as a screensaver
+
+- **Any smart TV with a browser:** open https://serski.github.io/pixel-machine/?tv. It starts full screen and changes by itself. On the remote, OK makes a new study, left and right change the palette, up and down change the speed.
+- **Google TV and Chromecast:** in the app, save the 4K screensaver images, add them to a Google Photos album, then pick that album in Ambient mode.
+- **Samsung The Frame:** send the images to Art Mode with the SmartThings app.
+- **Apple TV:** add the images to a shared photo album and choose it as the screen saver.
+- **Any TV with USB:** use "Set up a TV loop video", render it, copy the MP4 to a USB stick and play it on repeat.
+- **Casting:** open the app in Chrome and cast the tab, or use AirPlay from a Mac, iPhone or iPad.
+
+## Live performance setup
+
+1. Open the app on your laptop and press **Open output window** in Live performance.
+2. Drag the new window to the projector or second screen, click it, and press **F** for full screen.
+3. Keep playing from the laptop: everything you change appears on the output.
+4. To use a MIDI controller (Chrome or Edge), press **Connect**, turn on **Map knobs**, click a slider and turn a knob. Keys and pads send rings out from the core.
 
 ## Updating the app
 

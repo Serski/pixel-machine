@@ -429,7 +429,7 @@ kbd {
 .meter i { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: var(--accent); }
 .beat-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--line); vertical-align: middle; }
 .beat-dot.on { background: var(--accent); }
-.jump { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.jump { display: flex; flex-wrap: wrap; gap: 4px; }
 .jump::-webkit-scrollbar { display: none; }
 .jump button {
   flex: 1 0 auto;
@@ -445,9 +445,37 @@ kbd {
 .group.flash { outline: 2px solid var(--accent); outline-offset: 6px; }
 @media (min-width: 861px) {
   .jump { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: 10px; margin-block: -10px; }
-  .panel .group { scroll-margin-top: 58px; }
+  .panel .group { scroll-margin-top: 92px; }
 }
 .app.dropping .stage { outline: 3px dashed var(--accent); outline-offset: -12px; }
+
+.maps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.maps li { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--chip); padding: 4px 4px 4px 8px; border-radius: 2px; }
+.maps li span { font-family: var(--f-mono); font-size: 11.5px; }
+.maps button { border: 0; background: transparent; color: var(--accent); cursor: pointer; font-size: 12px; text-decoration: underline; text-underline-offset: 2px; }
+.ctrl.learning { outline: 2px dashed var(--accent); outline-offset: 4px; }
+.cam-row { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 12px; align-items: center; }
+.cam-row canvas { width: 128px; height: 96px; image-rendering: pixelated; background: var(--ink); border-radius: 2px; }
+.pbtns { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.tvlink { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.tvlink code { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-family: var(--f-mono); font-size: 12px; background: var(--chip); padding: 8px 10px; border-radius: 2px; }
+.note strong { color: var(--ink); font-weight: 650; }
+.ex-hint {
+  position: fixed;
+  z-index: 102;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+  background: var(--plate);
+  color: var(--plate-ink);
+  padding: 10px 16px;
+  border-radius: 2px;
+  font-size: 15px;
+  backdrop-filter: blur(8px);
+  transition: opacity .6s ease;
+  white-space: nowrap;
+}
+.ex-hint.gone { opacity: 0; }
 
 @media (max-width: 860px) {
   html, body { height: auto; }
@@ -508,12 +536,15 @@ kbd {
     <div class="ex-caption" id="ex-caption" hidden>
       <b>Argiris Ser</b>
       <span id="ex-title"><em>Study</em> No. 4821, 2026</span>
+      <span id="ex-sense" hidden></span>
       <span>Pixel Machine</span>
     </div>
     <div class="ex-exit" id="ex-exit" hidden>
       <button type="button" id="ex-play">Pause</button>
+      <button type="button" id="ex-full" hidden>Full screen</button>
       <button type="button" id="ex-leave">Exit exhibition</button>
     </div>
+    <div class="ex-hint" id="ex-hint" hidden></div>
   </main>
 
   <aside class="panel" aria-label="Controls">
@@ -528,7 +559,10 @@ kbd {
       <button type="button" data-to="movement">Motion</button>
       <button type="button" data-to="music">Music</button>
       <button type="button" data-to="video" hidden>Video</button>
+      <button type="button" data-to="sec-print" hidden>Print</button>
       <button type="button" data-to="exhibition">Exhibit</button>
+      <button type="button" data-to="sec-tv">TV</button>
+      <button type="button" data-to="perform">Live</button>
       <button type="button" data-to="sec-color">Color</button>
     </nav>
 
@@ -564,6 +598,29 @@ kbd {
       </div>
       <button type="button" class="btn play wide" id="play"></button>
     </section>
+
+    <section class="group" id="growth">
+      <h2>Growth <small>the study builds itself</small></h2>
+      <div class="seg full words" role="group" aria-label="Growth" id="g-mode">
+        <button type="button" id="gmode-off" data-v="off">Off</button>
+        <button type="button" id="gmode-once" data-v="once">Grow once</button>
+        <button type="button" id="gmode-loop" data-v="loop">Loop</button>
+      </div>
+      <div class="vopt">
+        <span id="g-order-label">Order</span>
+        <div class="seg full words" role="group" aria-labelledby="g-order-label" id="g-order">
+          <button type="button" id="gorder-core" data-v="core">From the core</button>
+          <button type="button" id="gorder-scatter" data-v="scatter">Scatter</button>
+          <button type="button" id="gorder-rows" data-v="rows">Rows</button>
+        </div>
+      </div>
+      <div class="ctrl">
+        <label for="gdur">Growth time</label><output id="gdur-out" for="gdur">20 s</output>
+        <input type="range" id="gdur" min="3" max="120" step="1" value="20">
+      </div>
+      <button type="button" class="btn wide" id="g-again">Grow again</button>
+      <p class="note" id="g-note"></p>
+    </section>
     <p class="note" id="no-motion" hidden>Movement, touch play and video need WebGL 2, which this browser doesn't offer. Still images work as normal.</p>
 
     <section class="group" id="touchplay">
@@ -595,6 +652,37 @@ kbd {
       </div>
     </section>
 
+    <section class="group" id="camera">
+      <h2>Camera <small>visitors move the work</small></h2>
+      <div class="row">
+        <span>Use the camera <small>reacts to movement</small></span>
+        <button type="button" class="btn toggle" id="c-on" aria-pressed="false">Off</button>
+      </div>
+      <div class="seg full words" role="group" aria-label="Camera effect" id="c-mode">
+        <button type="button" id="cmode-shadow" data-v="shadow">Shadow</button>
+        <button type="button" id="cmode-glow" data-v="glow">Glow</button>
+        <button type="button" id="cmode-push" data-v="push">Push</button>
+        <button type="button" id="cmode-ripple" data-v="ripple">Ripple</button>
+      </div>
+      <p class="note" id="c-note"></p>
+      <div class="ctrl">
+        <label for="cstrength">Camera strength</label><output id="cstrength-out" for="cstrength">60%</output>
+        <input type="range" id="cstrength" min="10" max="100" step="1" value="60">
+      </div>
+      <div class="cam-row" id="c-preview-row" hidden>
+        <canvas id="c-preview" width="64" height="48" aria-label="The movement the camera sees"></canvas>
+        <div class="group">
+          <p class="note">The movement the camera sees. Point it at where visitors will stand.</p>
+          <div class="row">
+            <span>Mirror</span>
+            <button type="button" class="btn toggle" id="c-mirror" aria-pressed="true">On</button>
+          </div>
+        </div>
+      </div>
+      <p class="note">Everything happens on this device. The camera image is never recorded, saved or sent anywhere.</p>
+      <p class="status" id="c-status" aria-live="polite"></p>
+    </section>
+
     <section class="group" id="music">
       <h2>Music</h2>
       <input type="file" id="m-file" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.flac,.opus" hidden>
@@ -609,12 +697,6 @@ kbd {
           <input type="range" id="m-seek" min="0" max="1000" step="1" value="0" aria-label="Position in the song">
           <output id="m-time" for="m-seek">0:00 / 0:00</output>
         </div>
-        <div class="meters" aria-hidden="true">
-          <span>Bass</span><div class="meter"><i id="mt-bass"></i></div>
-          <span>Mid</span><div class="meter"><i id="mt-mid"></i></div>
-          <span>High</span><div class="meter"><i id="mt-high"></i></div>
-          <span>Beat</span><span><span class="beat-dot" id="mt-beat"></span></span>
-        </div>
         <div class="ctrl">
           <label for="mvol">Volume</label><output id="mvol-out" for="mvol">80%</output>
           <input type="range" id="mvol" min="0" max="100" step="1" value="80">
@@ -623,6 +705,17 @@ kbd {
           <span>Repeat <small>starts again at the end</small></span>
           <button type="button" class="btn toggle" id="m-repeat" aria-pressed="true">On</button>
         </div>
+      </div>
+      <div class="row">
+        <span>Listen to the room <small>uses the microphone</small></span>
+        <button type="button" class="btn toggle" id="m-room" aria-pressed="false">Off</button>
+      </div>
+      <p class="note">Voices, clapping, footsteps or a live band move the work. Sound is analysed on this device and never recorded.</p>
+      <div class="meters" id="m-meters" aria-hidden="true" hidden>
+        <span>Bass</span><div class="meter"><i id="mt-bass"></i></div>
+        <span>Mid</span><div class="meter"><i id="mt-mid"></i></div>
+        <span>High</span><div class="meter"><i id="mt-high"></i></div>
+        <span>Beat</span><span><span class="beat-dot" id="mt-beat"></span></span>
       </div>
       <div class="vopt">
         <span>The work reacts with</span>
@@ -686,8 +779,37 @@ kbd {
         <button type="button" class="btn toggle" id="v-loop" aria-pressed="false">Loop</button>
       </div>
       <p class="note" id="v-summary"></p>
+      <p class="note" id="v-grow-note" hidden>Growth is on, so rendered clips start from an empty field and build themselves.</p>
       <button type="button" class="btn primary wide" id="v-render">Render video</button>
       <p class="status" id="v-status" aria-live="polite"></p>
+    </section>
+
+    <section class="group" id="sec-print" hidden>
+      <h2>Print <small>paper sizes in cm</small></h2>
+      <div class="grid4" id="pr-papers"></div>
+      <div class="ctrl">
+        <label for="prborder">Border</label><output id="prborder-out" for="prborder">20 mm</output>
+        <input type="range" id="prborder" min="0" max="60" step="1" value="20">
+      </div>
+      <div class="row">
+        <span>Signature line <small>your name and the title</small></span>
+        <button type="button" class="btn toggle" id="pr-caption" aria-pressed="true">On</button>
+      </div>
+      <div class="row">
+        <span>Resolution</span>
+        <div class="seg" role="group" aria-label="Print resolution" id="pr-dpi">
+          <button type="button" id="prdpi-150" data-v="150">150 dpi</button>
+          <button type="button" id="prdpi-300" data-v="300">300 dpi</button>
+        </div>
+      </div>
+      <p class="note" id="pr-summary"></p>
+      <div class="pbtns">
+        <button type="button" class="btn primary" id="pr-png">Print PNG</button>
+        <button type="button" class="btn" id="pr-pdf">PDF</button>
+        <button type="button" class="btn" id="pr-svg">SVG</button>
+      </div>
+      <p class="note" id="pr-vector-note"></p>
+      <p class="status" id="pr-status" aria-live="polite"></p>
     </section>
 
     <section class="group" id="exhibition">
@@ -711,8 +833,68 @@ kbd {
         <span>Caption <small>your name and the title</small></span>
         <button type="button" class="btn toggle" id="ex-caption-t" aria-pressed="true">On</button>
       </div>
+      <div class="row">
+        <span>Change every <small>a new study by itself</small></span>
+        <div class="seg words" role="group" aria-label="Change the study every" id="ex-change">
+          <button type="button" id="exc-0" data-v="0">Never</button>
+          <button type="button" id="exc-5" data-v="5">5 min</button>
+          <button type="button" id="exc-15" data-v="15">15 min</button>
+          <button type="button" id="exc-60" data-v="60">1 h</button>
+        </div>
+      </div>
+      <div class="row">
+        <span>Picture quality <small>lower runs smoother on TVs</small></span>
+        <div class="seg words" role="group" aria-label="Picture quality" id="ex-quality">
+          <button type="button" id="exq-full" data-v="full">Full</button>
+          <button type="button" id="exq-balanced" data-v="balanced">Balanced</button>
+          <button type="button" id="exq-light" data-v="light">Light</button>
+        </div>
+      </div>
       <button type="button" class="btn primary wide" id="ex-start">Start exhibition</button>
       <p class="note">Runs full screen with the controls hidden and keeps the screen awake. Visitors can play with touch or the mouse. Press <kbd>Esc</kbd> or Exit to leave.</p>
+    </section>
+
+    <section class="group" id="sec-tv">
+      <h2>TV and screensaver</h2>
+      <p class="note">Open this link in your smart TV's web browser. It starts full screen and keeps changing by itself. On the remote, OK makes a new study, left and right change the palette, up and down change the speed.</p>
+      <div class="tvlink"><code id="tv-link">serski.github.io/pixel-machine/?tv</code><button type="button" class="btn" id="tv-copy">Copy</button></div>
+      <div class="group" id="tv-pack-row" hidden>
+        <div class="row">
+          <span>Screensaver images <small>4K, 3840 × 2160</small></span>
+          <div class="seg" role="group" aria-label="Number of images" id="tv-count">
+            <button type="button" id="tvc-6" data-v="6">6</button>
+            <button type="button" id="tvc-12" data-v="12">12</button>
+            <button type="button" id="tvc-24" data-v="24">24</button>
+          </div>
+        </div>
+        <button type="button" class="btn wide" id="tv-pack">Save 12 screensaver images (4K)</button>
+        <button type="button" class="btn wide" id="tv-loop">Set up a TV loop video</button>
+      </div>
+      <p class="note"><strong>Google TV and Chromecast:</strong> add the images to a Google Photos album, then pick it in Ambient mode. <strong>Samsung The Frame:</strong> send them to Art Mode with the SmartThings app. <strong>Apple TV:</strong> use a shared photo album as the screen saver. <strong>Any TV:</strong> play a TV loop video from a USB stick on repeat, or cast this page from Chrome or AirPlay.</p>
+      <p class="status" id="tv-status" aria-live="polite"></p>
+    </section>
+
+    <section class="group" id="perform">
+      <h2>Live performance</h2>
+      <div class="actions">
+        <button type="button" class="btn" id="p-pulse">Pulse</button>
+        <button type="button" class="btn" id="p-output">Open output window</button>
+      </div>
+      <p class="note">Pulse sends a ring out from the core, like a beat. The output window shows only the work: drag it to a projector or second screen, click it, and press F for full screen. You keep the controls here.</p>
+      <div class="row">
+        <span>MIDI controller <small id="midi-devices">not connected</small></span>
+        <button type="button" class="btn" id="midi-connect">Connect</button>
+      </div>
+      <div class="group" id="midi-area" hidden>
+        <div class="row">
+          <span>Map knobs <small>click a slider, then turn a knob</small></span>
+          <button type="button" class="btn toggle" id="midi-learn" aria-pressed="false">Off</button>
+        </div>
+        <ul class="maps" id="midi-maps" hidden></ul>
+        <p class="note">Keys and pads send rings out from the core, bigger when you play harder. The mod wheel controls Strength until you map it.</p>
+      </div>
+      <p class="status" id="perf-status" aria-live="polite"></p>
+      <p class="keys">Keys: <kbd>1</kbd>–<kbd>8</kbd> switch movements, <kbd>[</kbd> <kbd>]</kbd> change the palette, <kbd>B</kbd> pulse, <kbd>N</kbd> new study, <kbd>Space</kbd> play or pause.</p>
     </section>
 
     <section class="sliders">
@@ -905,6 +1087,25 @@ kbd {
     ink: { code: 4, life: 8, desc: "Drops dark tone that spreads out and slowly fades." },
   };
   const VSPEEDS = [0.25, 0.5, 1, 2, 4, 8, 16], VLENS = [0, 5, 10, 20, 30, 60], VFPS = [24, 30, 60], VSIZES = [720, 1080, 2160];
+  const CAM_MODES = {
+    shadow: { code: 1, desc: "Movement leaves dark shadows in the field." },
+    glow: { code: 2, desc: "Movement lights the field up." },
+    push: { code: 3, desc: "Movement pushes the bands aside." },
+    ripple: { code: 4, desc: "Movement makes the bands shimmer and ripple." },
+  };
+  const GROW_CODES = { core: 1, scatter: 2, rows: 3 };
+  const PAPERS = [
+    { id: "a4", name: "A4", w: 210, h: 297 }, { id: "a3", name: "A3", w: 297, h: 420 },
+    { id: "a2", name: "A2", w: 420, h: 594 }, { id: "a1", name: "A1", w: 594, h: 841 },
+    { id: "30x30", name: "30 × 30", w: 300, h: 300, cm: true }, { id: "50x50", name: "50 × 50", w: 500, h: 500, cm: true },
+    { id: "50x70", name: "50 × 70", w: 500, h: 700, cm: true }, { id: "70x100", name: "70 × 100", w: 700, h: 1000, cm: true },
+  ];
+  const QUALITY_CAP = { full: 4.2e6, balanced: 2.1e6, light: 0.9e6 };
+  const MIDI_TARGETS = ["speed", "strength", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "levels", "hue", "tstrength", "tsize", "msens", "mvol", "cstrength", "gdur"];
+  const APP_URL = "https://serski.github.io/pixel-machine/";
+  const isOutput = location.hash === "#output";
+  const tvMode = /[?&]tv\b/.test(location.search) || location.hash === "#tv";
+  const inClaude = !!(window.claude && typeof window.claude.use === "function");
 
   // ---------- state ----------
   const FIELD_KEYS = ["grid", "format", "levels", "reach", "falloff", "round", "stretch", "tilt", "centers", "warp", "grain", "palette", "hue", "invert", "seed", "wells"];
@@ -916,6 +1117,10 @@ kbd {
     exFill: true, exSurround: "black", exWander: true, exCaption: true,
     vspeed: 1, vlen: 10, vfps: 30, vsize: 1080, vloop: false,
     mreact: "pulse,beat,surge", msens: 100, mvol: 80, mrepeat: true, vmusic: true,
+    cmode: "shadow", cstrength: 60, cmirror: true,
+    gmode: "off", gorder: "core", gdur: 20,
+    prpaper: "a3", prborder: 20, prcaption: true, prdpi: 300,
+    exchange: 0, exquality: "full", tvcount: 12, midimap: {},
   };
   const PRESETS = [
     { id: "deep", name: "Deep blue study", meta: "20 × 20 · 10 tones",
@@ -924,7 +1129,7 @@ kbd {
       s: { grid: 20, format: "1x1", levels: 8, reach: 82, falloff: 90, round: 48, stretch: 22, tilt: 0, centers: 1, warp: 28, grain: 55, palette: "glacier", invert: false, seed: 1307, w0: [-0.04, 0.12] } },
   ];
   const state = Object.assign({}, DEFAULTS);
-  const exhibit = { active: false, startT: 0, idleTimer: 0, wakeLock: null, wentFullscreen: false };
+  const exhibit = { active: false, startT: 0, idleTimer: 0, wakeLock: null, wentFullscreen: false, output: false, tv: false, lastChange: 0, pendingChange: false };
 
   function mulberry(seed) {
     let a = seed >>> 0;
@@ -976,9 +1181,26 @@ kbd {
     if (!VLENS.includes(state.vlen)) state.vlen = 10;
     if (!VFPS.includes(state.vfps)) state.vfps = 30;
     if (!VSIZES.includes(state.vsize)) state.vsize = 1080;
+    if (!CAM_MODES[state.cmode]) state.cmode = "shadow";
+    if (!["off", "once", "loop"].includes(state.gmode)) state.gmode = "off";
+    if (!GROW_CODES[state.gorder]) state.gorder = "core";
+    state.gdur = Math.max(3, Math.min(120, Math.round(state.gdur)));
+    state.cstrength = Math.max(10, Math.min(100, Math.round(state.cstrength)));
+    if (!PAPERS.some(p => p.id === state.prpaper)) state.prpaper = "a3";
+    state.prborder = Math.max(0, Math.min(60, Math.round(state.prborder)));
+    if (state.prdpi !== 150 && state.prdpi !== 300) state.prdpi = 300;
+    if (![0, 5, 15, 60].includes(state.exchange)) state.exchange = 0;
+    if (!QUALITY_CAP[state.exquality]) state.exquality = "full";
+    if (![6, 12, 24].includes(state.tvcount)) state.tvcount = 12;
+    const mm = {};
+    if (state.midimap && typeof state.midimap === "object" && !Array.isArray(state.midimap)) {
+      for (const [cc, id] of Object.entries(state.midimap)) if (/^\d{1,3}$/.test(cc) && MIDI_TARGETS.includes(id)) mm[cc] = id;
+    }
+    state.midimap = mm;
   }
   let persistTimer = 0;
   function persist() {
+    if (isOutput) return;
     clearTimeout(persistTimer);
     persistTimer = setTimeout(() => { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }, 250);
   }
@@ -1092,6 +1314,14 @@ kbd {
         beatN++;
       }
     }
+    if (opts.pulses) {
+      for (const pl of opts.pulses) {
+        if (beatN >= 6) break;
+        beats[beatN * 2] = pl.age;
+        beats[beatN * 2 + 1] = pl.amp * 0.12 * Math.exp(-pl.age * 0.8);
+        beatN++;
+      }
+    }
     const ws = s.wells || seedWells(s.seed);
     const wells = [];
     for (let i = 0; i < s.centers; i++) {
@@ -1117,6 +1347,7 @@ kbd {
       shimmerSeed: (s.seed ^ Math.imul(au && mr.has("sparkle") ? au.frame : Math.floor(t * 10), 0x9E3779B9)) >>> 0,
       deepen: au && mr.has("deepen") ? 0.1 * sens * au.env[1] : 0,
       beats, beatN,
+      grow: opts.grow == null ? 2 : opts.grow, growOrder: GROW_CODES[s.gorder] || 1,
       t, wells,
     };
   }
@@ -1183,6 +1414,14 @@ uniform int uBeatN;
 uniform vec4 uTouch[32];
 uniform int uTouchN, uTouchMode;
 uniform float uTouchSize;
+uniform sampler2D uCam;
+uniform float uCamAmt;
+uniform int uCamMode;
+uniform vec4 uCamXf;
+uniform vec2 uCamTexel;
+uniform float uGrow;
+uniform int uGrowOrder;
+uniform vec3 uGround;
 uniform vec2 uOrigin, uPx;
 uniform float uResY, uFlip;
 uniform int uSS;
@@ -1237,9 +1476,29 @@ vec3 touchAt(vec2 p) {
   if (dl > 0.0) disp *= 0.3 * (1.0 - exp(-dl / 0.3)) / dl;
   return vec3(disp, dd);
 }
+// Camera: the movement it sees, mapped onto the work. x, y = offset of the sampling point, z = change in depth.
+vec3 camAt(vec2 p) {
+  vec2 a = (p / uExt + 1.0) * 0.5;
+  vec2 uv = a * uCamXf.xy + uCamXf.zw;
+  float m = texture(uCam, uv).r;
+  if (uCamMode == 3) {
+    float gx = texture(uCam, uv + vec2(uCamTexel.x, 0.0)).r - texture(uCam, uv - vec2(uCamTexel.x, 0.0)).r;
+    float gy = texture(uCam, uv + vec2(0.0, uCamTexel.y)).r - texture(uCam, uv - vec2(0.0, uCamTexel.y)).r;
+    return vec3(vec2(gx * sign(uCamXf.x), gy) * 0.35 * uCamAmt, 0.0);
+  }
+  if (uCamMode == 4) return vec3(0.0, 0.0, uCamAmt * 0.08 * m * sin(uT * 4.0 + m * 10.0));
+  if (uCamMode == 2) return vec3(0.0, 0.0, uCamAmt * 0.4 * m);
+  return vec3(0.0, 0.0, -uCamAmt * 0.4 * m);
+}
+vec3 interactAt(vec2 p) {
+  vec3 r = vec3(0.0);
+  if (uTouchN > 0) r += touchAt(p);
+  if (uCamAmt > 0.0) r += camAt(p);
+  return r;
+}
 int levelAt(ivec2 c, vec3 tc) {
   vec2 p = ((vec2(c) + 0.5) / uGridN * 2.0 - 1.0) * uExt;
-  if (uTouchN > 0 && uSS == 1) tc = touchAt(p);
+  if (uSS == 1 && (uTouchN > 0 || uCamAmt > 0.0)) tc = interactAt(p);
   vec2 q = p;
   if (uWarp > 0.0) q += uWarp * fbm2(p * NS + vec2(0.11, 0.23) + uMorph);
   if (uFlow > 0.0) {
@@ -1273,6 +1532,14 @@ int levelAt(ivec2 c, vec3 tc) {
   }
   if (uNw > 1) d = -log(max(sum, 1e-30)) / 7.0;
   if (uGam != 1.0 && d > 0.0) d = pow(d, uGam);
+  // Growth: squares appear in order (from the core, scattered, or row by row) as uGrow runs from 0 to 1.
+  if (uGrow < 1.0) {
+    float key;
+    if (uGrowOrder == 2) key = hash(c, uSeed ^ 0x9e3779b9u);
+    else if (uGrowOrder == 3) key = (float(c.y) + hash(c, uSeed ^ 0x2545f491u) * 0.9) / uGridN.y;
+    else key = clamp(d, 0.0, 1.25) / 1.25 * 0.93 + hash(c, uSeed ^ 0x51ed27u) * 0.07;
+    if (key > uGrow) return -1;
+  }
   if (uRipple > 0.0) d += uRipple * sin(d * 19.0 - uT * 2.2);
   for (int i = 0; i < 6; i++) {
     if (i >= uBeatN) break;
@@ -1290,7 +1557,7 @@ void main() {
   vec2 pix = vec2(gl_FragCoord.x, uFlip > 0.5 ? gl_FragCoord.y : uResY - gl_FragCoord.y);
   ivec2 G = ivec2(uGridN + 0.5);
   vec3 tc = vec3(0.0);
-  if (uTouchN > 0 && uSS > 1) tc = touchAt(((uOrigin + pix * uPx) * 2.0 - 1.0) * uExt);
+  if (uSS > 1 && (uTouchN > 0 || uCamAmt > 0.0)) tc = interactAt(((uOrigin + pix * uPx) * 2.0 - 1.0) * uExt);
   vec3 col = vec3(0.0);
   for (int j = 0; j < 3; j++) {
     if (j >= uSS) break;
@@ -1299,13 +1566,15 @@ void main() {
       vec2 sub = (vec2(float(i), float(j)) + 0.5) / float(uSS) - 0.5;
       vec2 a = uOrigin + (pix + sub) * uPx;
       ivec2 c = clamp(ivec2(floor(a * uGridN)), ivec2(0), G - 1);
-      col += uLut[levelAt(c, tc)];
+      int lv = levelAt(c, tc);
+      col += lv < 0 ? uGround : uLut[lv];
     }
   }
   outColor = vec4(col / float(uSS * uSS), 1.0);
 }`;
 
   let art = $("art");
+  let camTex = null;
   let gl = null, prog = null, U = {}, noiseTex = null, glNoiseSeed = null, fbo = null, fboTex = null, fboW = 0, fboH = 0, maxTile = 2048, glLost = false;
   let ctx2d = null;
   let lut = null, lutDirty = true, lutF = new Float32Array(96), lutVersion = 0;
@@ -1335,7 +1604,8 @@ void main() {
     gl.useProgram(prog);
     const names = ["uNoise", "uLut", "uGridN", "uExt", "uL", "uReach", "uGam", "uPe", "uNorm", "uScale", "uRot", "uWarp", "uGrain", "uShimmer",
       "uSeed", "uShimmerSeed", "uWells", "uNw", "uT", "uMorph", "uFlow", "uRipple", "uSwirl", "uWave",
-      "uTouch", "uTouchN", "uTouchMode", "uTouchSize", "uOrigin", "uPx", "uResY", "uFlip", "uSS", "uDeepen", "uBeats", "uBeatN"];
+      "uTouch", "uTouchN", "uTouchMode", "uTouchSize", "uOrigin", "uPx", "uResY", "uFlip", "uSS", "uDeepen", "uBeats", "uBeatN",
+      "uCam", "uCamAmt", "uCamMode", "uCamXf", "uCamTexel", "uGrow", "uGrowOrder", "uGround"];
     U = {};
     names.forEach(n => { U[n] = gl.getUniformLocation(prog, n); });
     gl.bindVertexArray(gl.createVertexArray());
@@ -1347,6 +1617,18 @@ void main() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
     gl.uniform1i(U.uNoise, 0);
+    camTex = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, camTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, 1, 1, 0, gl.RED, gl.UNSIGNED_BYTE, new Uint8Array(1));
+    gl.uniform1i(U.uCam, 2);
+    gl.activeTexture(gl.TEXTURE0);
+    cam.dirty = true;
     glNoiseSeed = null;
     fbo = null; fboTex = null; fboW = fboH = 0;
     maxTile = Math.max(256, Math.min(2048, gl.getParameter(gl.MAX_TEXTURE_SIZE), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)));
@@ -1428,6 +1710,24 @@ void main() {
     gl.uniform1f(U.uDeepen, P.deepen || 0);
     gl.uniform1i(U.uBeatN, P.beatN || 0);
     if (P.beatN) gl.uniform2fv(U.uBeats, P.beats);
+    gl.uniform1f(U.uGrow, P.grow == null ? 2 : P.grow);
+    gl.uniform1i(U.uGrowOrder, P.growOrder || 1);
+    const lf = tgt.lut || lutF, gi = (P.L - 1) * 3;
+    gl.uniform3f(U.uGround, lf[gi], lf[gi + 1], lf[gi + 2]);
+    const camOn = !!tgt.touch && camActive();
+    if (camOn && cam.dirty) {
+      gl.activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, camTex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, cam.W, cam.H, 0, gl.RED, gl.UNSIGNED_BYTE, cam.bytes);
+      gl.activeTexture(gl.TEXTURE0);
+      cam.dirty = false;
+    }
+    gl.uniform1f(U.uCamAmt, camOn ? state.cstrength / 100 : 0);
+    if (camOn) {
+      gl.uniform1i(U.uCamMode, CAM_MODES[state.cmode].code);
+      gl.uniform4fv(U.uCamXf, camXform(P.cols / P.rows));
+      gl.uniform2f(U.uCamTexel, 1 / cam.W, 1 / cam.H);
+    }
     const tn = tgt.touch && touchOn() && touches.length ? liveTouches(tgt.touchNow || performance.now()) : 0;
     if (tn) {
       gl.uniform4fv(U.uTouch, touchArr);
@@ -1473,7 +1773,8 @@ void main() {
     let cssW, cssH;
     if (exhibit.active && state.exFill) { cssW = bw; cssH = bh; }
     else { const k = Math.min(bw / dm.cols, bh / dm.rows); cssW = dm.cols * k; cssH = dm.rows * k; }
-    if (cssW * cssH * dpr * dpr > 4.2e6) dpr = Math.sqrt(4.2e6 / (cssW * cssH));
+    const cap = QUALITY_CAP[state.exquality] || 4.2e6;
+    if (cssW * cssH * dpr * dpr > cap) dpr = Math.sqrt(cap / (cssW * cssH));
     let cell = cssW * dpr / dm.cols;
     if (!(exhibit.active && state.exFill) && cell >= 2) { const sn = Math.floor(cell); if (sn >= cell * 0.85) cell = sn; }
     const dw = Math.max(1, Math.round(exhibit.active && state.exFill ? cssW * dpr : dm.cols * cell));
@@ -1535,7 +1836,9 @@ void main() {
     if (gl && !glLost) {
       const opts = {};
       if (exhibit.active && state.exWander) opts.wander = (performance.now() - exhibit.startT) / 1000;
-      opts.audio = musicAudio();
+      opts.audio = liveAudio();
+      opts.pulses = livePulses();
+      opts.grow = growNow();
       const P = fieldParams(state, time, true, opts);
       const span = 1 / view.z, px = [span / Dw, span / Dh];
       const cpp = P.cols * px[0];
@@ -1565,7 +1868,12 @@ void main() {
       needsDraw = true;
     }
     if (exhibit.active && state.exWander && gl) needsDraw = true;
+    camFrame(now);
+    if (pulses.length) needsDraw = true;
+    tickGrowth(now);
+    tickAutoChange(now);
     if (needsDraw) { needsDraw = false; render(); }
+    sendFrame();
     if (recorder) updateRecTime();
     requestAnimationFrame(loop);
   }
@@ -1659,11 +1967,13 @@ void main() {
     tog("ex-caption-t", state.exCaption);
     document.querySelectorAll("#ex-surround button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === state.exSurround)));
     $("ex-surround-row").hidden = state.exFill;
+    document.querySelectorAll("#ex-change button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === state.exchange)));
+    document.querySelectorAll("#ex-quality button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === state.exquality)));
     if (exhibit.active) applyExhibitLook();
   }
 
   // ---------- controls ----------
-  const sliderIds = ["levels", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "hue", "speed", "strength", "tstrength", "tsize", "msens", "mvol"];
+  const sliderIds = ["levels", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "hue", "speed", "strength", "tstrength", "tsize", "msens", "mvol", "cstrength", "gdur", "prborder"];
   const sliders = {};
   sliderIds.forEach(id => { sliders[id] = $(id); });
 
@@ -1748,13 +2058,7 @@ void main() {
     b.dataset.id = m.id;
     b.textContent = m.name;
     b.title = m.desc;
-    b.addEventListener("click", () => {
-      const ms = motionSet(state);
-      if (ms.has(m.id)) ms.delete(m.id); else { ms.add(m.id); state.playing = true; }
-      lastToggled = m.id;
-      state.motion = [...ms].join(",");
-      changed();
-    });
+    b.addEventListener("click", () => toggleMotion(m.id));
     $("motions").append(b);
   });
   function togglePlay() {
@@ -1842,6 +2146,11 @@ void main() {
     updateExhibitUI();
     updateVideoUI();
     updateMusicUI();
+    updateCameraUI();
+    updateGrowthUI();
+    updatePrintUI();
+    updateTvUI();
+    updatePerfUI();
     updateLabel();
     updateZoomUI();
     updateSave();
@@ -1850,9 +2159,10 @@ void main() {
     syncUI();
     needsDraw = true;
     persist();
+    queueSendState();
   }
 
-  ["levels", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "speed", "strength", "tstrength", "tsize", "msens"].forEach(id => {
+  ["levels", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "speed", "strength", "tstrength", "tsize", "msens", "cstrength", "gdur", "prborder"].forEach(id => {
     const el = sliders[id];
     el.addEventListener("input", () => {
       state[id] = +el.value;
@@ -1868,6 +2178,7 @@ void main() {
     state.seed = 1000 + Math.floor(Math.random() * 9000);
     const w0 = state.wells[0];
     state.wells = seedWells(state.seed, [w0.x, w0.y]);
+    if (state.gmode === "once") restartGrowth();
     changed();
   }
   document.querySelectorAll("#t-mode button").forEach(b => b.addEventListener("click", () => { state.touch = b.dataset.v; touches = []; changed(); }));
@@ -2011,6 +2322,9 @@ void main() {
     const outer = lut ? [lut.r[lut.L - 1], lut.g[lut.L - 1], lut.b[lut.L - 1]] : [0, 0, 0];
     stage.style.setProperty("--ex-bg", state.exFill || state.exSurround === "black" ? "#000" : rgbCss(outer));
     $("ex-caption").hidden = !state.exCaption;
+    const senses = [cam.on || (isOutput && remote.camOn) ? "movement" : "", room.on ? "sound" : ""].filter(Boolean);
+    $("ex-sense").hidden = !senses.length;
+    $("ex-sense").textContent = senses.length ? `Reacts to ${senses.join(" and ")} in the room. Nothing is recorded.` : "";
   }
   async function keepAwake() {
     try { if (navigator.wakeLock && exhibit.active && document.visibilityState === "visible") exhibit.wakeLock = await navigator.wakeLock.request("screen"); }
@@ -2027,6 +2341,8 @@ void main() {
     exhibit.active = true;
     exhibit.startT = performance.now();
     exhibit.wentFullscreen = false;
+    exhibit.lastChange = performance.now();
+    exhibit.pendingChange = false;
     if (gl && !motionSet(state).size) { state.motion = "flow"; lastToggled = "flow"; }
     if (gl) state.playing = true;
     view.z = 1; view.x = view.y = 0.5;
@@ -2060,6 +2376,7 @@ void main() {
     stage.classList.remove("inset");
     $("ex-exit").hidden = true;
     $("ex-caption").hidden = true;
+    $("ex-hint").hidden = true;
     $("ov-motion").hidden = !gl;
     const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
     if (fsEl) { const ex = document.exitFullscreen || document.webkitExitFullscreen; try { const r = ex && ex.call(document); if (r && r.catch) r.catch(() => {}); } catch (e) { /* ignore */ } }
@@ -2073,7 +2390,7 @@ void main() {
   }
   const onFsChange = () => {
     const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
-    if (!fsEl && exhibit.active && exhibit.wentFullscreen) exitExhibit();
+    if (!fsEl && exhibit.active && exhibit.wentFullscreen && !exhibit.output) exitExhibit();
   };
   document.addEventListener("fullscreenchange", onFsChange);
   document.addEventListener("webkitfullscreenchange", onFsChange);
@@ -2081,10 +2398,15 @@ void main() {
   document.addEventListener("keydown", e => {
     if (!exhibit.active) return;
     showChrome();
-    if (e.key === "Escape") { e.preventDefault(); exitExhibit(); }
+    if (e.key === "Escape") { e.preventDefault(); if (!exhibit.output) exitExhibit(); }
     else if (e.key === " ") { e.preventDefault(); if (gl) togglePlay(); }
     else if (e.key === "n" || e.key === "N") newVariation();
     else if (e.key === "m" || e.key === "M") toggleMusic();
+    else if ((e.key === "f" || e.key === "F") && exhibit.output) requestFull();
+    // TV remotes
+    else if (e.key === "Enter") { e.preventDefault(); newVariation(); }
+    else if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); cyclePalette(e.key === "ArrowRight" ? 1 : -1); }
+    else if (e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); state.speed = Math.max(4, Math.min(120, state.speed + (e.key === "ArrowUp" ? 8 : -8))); changed(); }
   });
   stage.addEventListener("pointermove", showChrome);
   $("ex-start").addEventListener("click", enterExhibit);
@@ -2094,6 +2416,8 @@ void main() {
   $("ex-wander").addEventListener("click", () => { state.exWander = !state.exWander; changed(); });
   $("ex-caption-t").addEventListener("click", () => { state.exCaption = !state.exCaption; changed(); });
   document.querySelectorAll("#ex-surround button").forEach(b => b.addEventListener("click", () => { state.exSurround = b.dataset.v; changed(); }));
+  document.querySelectorAll("#ex-change button").forEach(b => b.addEventListener("click", () => { state.exchange = +b.dataset.v; exhibit.lastChange = performance.now(); changed(); }));
+  document.querySelectorAll("#ex-quality button").forEach(b => b.addEventListener("click", () => { state.exquality = b.dataset.v; changed(); layout(); }));
 
   // ---------- saving ----------
   let downloads = null, saving = false;
@@ -2112,7 +2436,7 @@ void main() {
     const im = x2.createImageData(Ew, Eh);
     const out = new Uint32Array(im.data.buffer);
     if (gl && !glLost) {
-      const P = fieldParams(state, time, true, { dims: dm, audio: musicAudio() });
+      const P = fieldParams(state, time, true, { dims: dm, audio: liveAudio(), pulses: livePulses(), grow: growNow() });
       const T = Math.min(maxTile, Math.max(Ew, Eh));
       ensureFbo(T, T);
       const tmp = new Uint8Array(T * T * 4), tmp32 = new Uint32Array(tmp.buffer);
@@ -2339,7 +2663,8 @@ void main() {
           const k = plan.loop ? (i <= half ? i : n - i) : i;
           tt = t0 + k * step;
         }
-        drawGL(fieldParams(snap, tt, true, { dims: dm, audio }), { fb: fbo, w: W, h: H, origin: [0, 0], px: [1 / W, 1 / H], ss, flip: true, lut: lutSnap });
+        const grow = snap.gmode === "off" ? 2 : growAt(i / fps, snap.gmode, snap.gdur);
+        drawGL(fieldParams(snap, tt, true, { dims: dm, audio, grow }), { fb: fbo, w: W, h: H, origin: [0, 0], px: [1 / W, 1 / H], ss, flip: true, lut: lutSnap });
         gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
         const ts = Math.round(i * 1e6 / fps), next = Math.round((i + 1) * 1e6 / fps);
         const vf = new VideoFrame(pixels, { format: "RGBA", codedWidth: W, codedHeight: H, timestamp: ts, duration: next - ts });
@@ -2501,6 +2826,7 @@ void main() {
       saveBtn.hidden = false;
       updateSave();
       if (gl && (window.VideoEncoder || canLive())) { $("video").hidden = false; updateVideoUI(); }
+      if (gl) { $("sec-print").hidden = false; $("tv-pack-row").hidden = false; updatePrintUI(); }
       refreshJump();
     }
   })();
@@ -2693,6 +3019,12 @@ void main() {
     if (err) throw err;
   }
   function musicFrame(dt) {
+    if (room.on) {
+      roomFrame(dt);
+      music.uiT += dt;
+      if (music.uiT > 0.05) { music.uiT = 0; updateMeters(); }
+      return;
+    }
     if (!music.buffer) return;
     const F = music.F;
     if (music.playing) {
@@ -2714,27 +3046,32 @@ void main() {
     return { env: F.env, beats: F.beats.map(b => ({ age: pos - b.t, amp: b.amp })).filter(b => b.age >= 0 && b.age < 3), frame: Math.floor(pos * 12) };
   }
   function musicSurge() {
-    if (!music.playing || !reactSet(state).has("surge")) return 1;
-    const e = music.F.env;
+    if (isOutput || !(room.on || music.playing) || !reactSet(state).has("surge")) return 1;
+    const e = (room.on ? room.F : music.F).env;
     return 1 + 2.2 * (state.msens / 100) * (e[0] + e[1] + e[2]) / 3;
   }
 
   let lastReact = "pulse", seeking = false;
   function updateMeters() {
-    if (!music.buffer) return;
-    const F = music.F;
+    if (!music.buffer && !room.on) return;
+    const F = room.on ? room.F : music.F;
     $("mt-bass").style.width = (F.env[0] * 100).toFixed(1) + "%";
     $("mt-mid").style.width = (F.env[1] * 100).toFixed(1) + "%";
     $("mt-high").style.width = (F.env[2] * 100).toFixed(1) + "%";
-    const pos = musicPos(), lb = F.beats.length ? F.beats[F.beats.length - 1].t : -9;
-    $("mt-beat").classList.toggle("on", music.playing && pos - lb >= 0 && pos - lb < 0.15);
-    if (!seeking) { $("m-seek").value = String(Math.round(pos / music.buffer.duration * 1000)); setFill($("m-seek")); }
-    $("m-time").textContent = `${fmtTime(seeking ? +$("m-seek").value / 1000 * music.buffer.duration : pos)} / ${fmtTime(music.buffer.duration)}`;
+    const pos = room.on ? music.ctx.currentTime : musicPos(), lb = F.beats.length ? F.beats[F.beats.length - 1].t : -9;
+    $("mt-beat").classList.toggle("on", (room.on || music.playing) && pos - lb >= 0 && pos - lb < 0.15);
+    if (!music.buffer) return;
+    if (!seeking) { $("m-seek").value = String(Math.round(musicPos() / music.buffer.duration * 1000)); setFill($("m-seek")); }
+    $("m-time").textContent = `${fmtTime(seeking ? +$("m-seek").value / 1000 * music.buffer.duration : musicPos())} / ${fmtTime(music.buffer.duration)}`;
   }
   function updateMusicUI() {
     const has = !!music.buffer;
     $("m-loader").hidden = has;
     $("m-player").hidden = !has;
+    $("m-meters").hidden = !(has || room.on);
+    const rb = $("m-room");
+    rb.setAttribute("aria-pressed", String(room.on));
+    rb.textContent = room.on ? "On" : "Off";
     if (has) {
       $("m-name").textContent = music.name;
       $("m-name").title = music.name;
@@ -2796,6 +3133,870 @@ void main() {
     if (f) loadMusic(f); else mStatus("Drop an audio file, such as an MP3 or WAV.");
   });
 
+  // ---------- shared helpers for devices ----------
+  function deviceError(e, what) {
+    const name = e && e.name;
+    if (inClaude) return `The ${what} works in the app at serski.github.io/pixel-machine, not inside claude.ai.`;
+    if (name === "NotAllowedError" || name === "SecurityError") return `${what === "camera" ? "Camera" : "Microphone"} access is blocked. Allow it in the browser's site settings, then try again.`;
+    if (name === "NotFoundError" || name === "OverconstrainedError") return `No ${what} was found on this device.`;
+    if (name === "NotReadableError") return `The ${what} is busy in another app. Close that app and try again.`;
+    return `The ${what} couldn't start${name ? ` (${name})` : ""}.`;
+  }
+
+  // ---------- camera: visitors' movement ----------
+  const cam = { on: false, stream: null, video: null, cvs: null, cx: null, W: 64, H: 48, prev: null, motion: null, bytes: null, aspect: 4 / 3, lastT: 0, dirty: false, first: true, version: 0, sent: -1 };
+  const cStatus = msg => { $("c-status").textContent = msg; };
+  const camActive = () => !!gl && !!cam.bytes && (cam.on || (isOutput && remote.camOn));
+  // Maps the work (0..1 on each side) onto the camera picture, cropped to fit and mirrored if asked.
+  function camXform(artA) {
+    let sx = 1, sy = 1;
+    if (artA > cam.aspect) sy = cam.aspect / artA; else sx = artA / cam.aspect;
+    return new Float32Array(state.cmirror ? [-sx, sy, 0.5 * (1 + sx), 0.5 * (1 - sy)] : [sx, sy, 0.5 * (1 - sx), 0.5 * (1 - sy)]);
+  }
+  function setCamSize(W, H) {
+    cam.W = W; cam.H = H;
+    cam.prev = new Float32Array(W * H);
+    cam.motion = new Float32Array(W * H);
+    cam.bytes = new Uint8Array(W * H);
+    const pv = $("c-preview");
+    pv.width = W; pv.height = H;
+  }
+  async function startCamera() {
+    if (!gl || cam.on) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { cStatus(inClaude ? deviceError(null, "camera") : "This browser can't use a camera."); return; }
+    cStatus("Starting the camera…");
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }, audio: false }); }
+    catch (e) { cStatus(deviceError(e, "camera")); return; }
+    const v = document.createElement("video");
+    v.muted = true;
+    v.playsInline = true;
+    v.setAttribute("playsinline", "");
+    v.srcObject = stream;
+    try { await v.play(); } catch (e) { /* frames still arrive */ }
+    if (!v.videoWidth) await new Promise(res => { v.onloadedmetadata = res; setTimeout(res, 3000); });
+    cam.aspect = v.videoWidth && v.videoHeight ? v.videoWidth / v.videoHeight : 4 / 3;
+    setCamSize(64, Math.max(8, Math.round(64 / cam.aspect)));
+    cam.cvs = document.createElement("canvas");
+    cam.cvs.width = cam.W;
+    cam.cvs.height = cam.H;
+    cam.cx = cam.cvs.getContext("2d", { willReadFrequently: true });
+    cam.stream = stream; cam.video = v; cam.first = true; cam.on = true; cam.dirty = true;
+    cStatus("");
+    changed();
+  }
+  function stopCamera() {
+    if (cam.stream) cam.stream.getTracks().forEach(t => t.stop());
+    cam.stream = null; cam.video = null; cam.on = false;
+    if (cam.bytes) { cam.bytes.fill(0); cam.motion.fill(0); }
+    cam.dirty = true;
+    cam.version++;
+    changed();
+  }
+  // Turns camera frames into a soft map of where things moved, fading over about a second.
+  function camFrame(now) {
+    if (!cam.on || !cam.video || cam.video.readyState < 2 || now - cam.lastT < 45) return;
+    const dt = Math.min(0.25, (now - cam.lastT) / 1000);
+    cam.lastT = now;
+    let px;
+    try { cam.cx.drawImage(cam.video, 0, 0, cam.W, cam.H); px = cam.cx.getImageData(0, 0, cam.W, cam.H).data; } catch (e) { return; }
+    const W = cam.W, H = cam.H, N = W * H, M = cam.motion, decay = Math.exp(-dt / 0.7);
+    for (let i = 0; i < N; i++) {
+      const g = (px[i * 4] * 0.299 + px[i * 4 + 1] * 0.587 + px[i * 4 + 2] * 0.114) / 255;
+      const diff = cam.first ? 0 : Math.abs(g - cam.prev[i]);
+      cam.prev[i] = g;
+      M[i] = Math.max(M[i] * decay, Math.min(1, Math.max(0, diff - 0.035) * 7));
+    }
+    cam.first = false;
+    const B = cam.bytes;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        let sum = 0, n = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          const yy = y + dy;
+          if (yy < 0 || yy >= H) continue;
+          for (let dx = -1; dx <= 1; dx++) { const xx = x + dx; if (xx < 0 || xx >= W) continue; sum += M[yy * W + xx]; n++; }
+        }
+        B[y * W + x] = Math.min(255, Math.round(sum / n * 360));
+      }
+    }
+    cam.dirty = true;
+    cam.version++;
+    needsDraw = true;
+    if (!$("c-preview-row").hidden) drawCamPreview();
+  }
+  function drawCamPreview() {
+    const pv = $("c-preview"), pc = pv.getContext("2d"), W = cam.W, H = cam.H, im = pc.createImageData(W, H);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const v = cam.bytes[y * W + (state.cmirror ? W - 1 - x : x)], o = (y * W + x) * 4;
+        im.data[o] = im.data[o + 1] = im.data[o + 2] = v;
+        im.data[o + 3] = 255;
+      }
+    }
+    pc.putImageData(im, 0, 0);
+  }
+  function updateCameraUI() {
+    const b = $("c-on");
+    b.setAttribute("aria-pressed", String(cam.on));
+    b.textContent = cam.on ? "On" : "Off";
+    document.querySelectorAll("#c-mode button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === state.cmode)));
+    $("c-note").textContent = CAM_MODES[state.cmode].desc;
+    $("cstrength-out").textContent = state.cstrength + "%";
+    const m = $("c-mirror");
+    m.setAttribute("aria-pressed", String(state.cmirror));
+    m.textContent = state.cmirror ? "On" : "Off";
+    $("c-preview-row").hidden = !cam.on;
+  }
+  $("c-on").addEventListener("click", () => { if (cam.on) stopCamera(); else startCamera(); });
+  $("c-mirror").addEventListener("click", () => { state.cmirror = !state.cmirror; changed(); });
+  document.querySelectorAll("#c-mode button").forEach(b => b.addEventListener("click", () => { state.cmode = b.dataset.v; changed(); }));
+
+  // ---------- the room: live sound through the microphone ----------
+  const room = { on: false, stream: null, src: null, an: null, mute: null, F: newFollower(), nf: [0, 0, 0], raw: new Float64Array(3), clean: new Float64Array(3), tbuf: new Float32Array(FFT_N) };
+  async function startRoom() {
+    if (room.on) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { mStatus(inClaude ? deviceError(null, "microphone") : "This browser can't use a microphone."); return; }
+    if (!ensureAudio()) { mStatus("This browser can't analyse sound here."); return; }
+    mStatus("Starting the microphone…");
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
+    catch (e) { mStatus(deviceError(e, "microphone")); return; }
+    try { await music.ctx.resume(); } catch (e) { /* ignore */ }
+    room.src = music.ctx.createMediaStreamSource(stream);
+    room.an = music.ctx.createAnalyser();
+    room.an.fftSize = FFT_N;
+    room.an.smoothingTimeConstant = 0;
+    room.mute = music.ctx.createGain();
+    room.mute.gain.value = 0; // analysed, never played back, so there is no feedback
+    room.src.connect(room.an);
+    room.an.connect(room.mute);
+    room.mute.connect(music.ctx.destination);
+    room.stream = stream; room.F = newFollower(); room.nf = [0, 0, 0]; room.on = true;
+    mStatus("");
+    changed();
+  }
+  function stopRoom() {
+    if (room.stream) room.stream.getTracks().forEach(t => t.stop());
+    try { if (room.src) room.src.disconnect(); if (room.mute) room.mute.disconnect(); } catch (e) { /* ignore */ }
+    room.stream = null;
+    room.on = false;
+    changed();
+  }
+  function roomFrame(dt) {
+    room.an.getFloatTimeDomainData(room.tbuf);
+    bandsFrom(room.tbuf, music.ctx.sampleRate, room.raw);
+    // Follow the room's background noise and react only to what rises above it.
+    for (let k = 0; k < 3; k++) {
+      const r = room.raw[k], nf = room.nf[k];
+      room.nf[k] = nf === 0 ? r : nf + (r - nf) * Math.min(1, dt / (r < nf ? 0.5 : 8));
+      room.clean[k] = Math.max(0, r - room.nf[k] * 1.3);
+    }
+    stepFollower(room.F, room.clean, music.ctx.currentTime, dt);
+    needsDraw = true;
+  }
+  function liveAudio() {
+    if (isOutput) return remote.audio && performance.now() - remote.lastMsg < 1500 ? remote.audio : null;
+    if (room.on && gl) {
+      const F = room.F, now = music.ctx.currentTime;
+      return { env: F.env, beats: F.beats.map(b => ({ age: now - b.t, amp: b.amp })).filter(b => b.age >= 0 && b.age < 3), frame: Math.floor(now * 12) };
+    }
+    return musicAudio();
+  }
+  $("m-room").addEventListener("click", () => { if (room.on) stopRoom(); else startRoom(); });
+
+  // ---------- growth: the study builds itself ----------
+  const growth = { start: performance.now(), cycle: -1 };
+  const growCycle = dur => dur * 2.1 + Math.max(1, dur * 0.12);
+  function growAt(e, mode, dur) {
+    if (mode === "off") return 2;
+    if (mode === "once") return e >= dur ? 2 : e / dur;
+    const hold = dur * 0.6, fade = dur * 0.5, p = e % growCycle(dur);
+    if (p < dur) return p / dur;
+    if (p < dur + hold) return 2;
+    if (p < dur + hold + fade) return 1 - (p - dur - hold) / fade;
+    return 0;
+  }
+  function growNow() {
+    if (isOutput && remote.grow != null && performance.now() - remote.lastMsg < 1500) return remote.grow;
+    return growAt((performance.now() - growth.start) / 1000, state.gmode, state.gdur);
+  }
+  function restartGrowth() { growth.start = performance.now(); growth.cycle = -1; needsDraw = true; }
+  function tickGrowth(now) {
+    if (state.gmode === "off") return;
+    const e = (now - growth.start) / 1000;
+    if (state.gmode === "loop" || e < state.gdur + 0.5) needsDraw = true;
+    if (state.gmode !== "loop") return;
+    const c = Math.floor(e / growCycle(state.gdur));
+    if (c === growth.cycle) return;
+    const first = growth.cycle < 0;
+    growth.cycle = c;
+    if (!first && exhibit.pendingChange && !isOutput) { exhibit.pendingChange = false; newVariation(); }
+  }
+  // Exhibitions: a new study every few minutes. With looping growth, the change waits for the next empty field.
+  function tickAutoChange(now) {
+    if (!exhibit.active || isOutput || !state.exchange) return;
+    if (!exhibit.lastChange) exhibit.lastChange = now;
+    if (now - exhibit.lastChange < state.exchange * 60000) return;
+    exhibit.lastChange = now;
+    if (state.gmode === "loop") exhibit.pendingChange = true; else newVariation();
+  }
+  const GROW_NOTES = {
+    once: "Grows once, then stays.",
+    loop: "Grows, holds, dissolves and begins again, on and on. Good for exhibitions.",
+  };
+  const ORDER_NOTES = { core: "from the dark core outward", scatter: "square by square, scattered", rows: "row by row, like weaving" };
+  function updateGrowthUI() {
+    document.querySelectorAll("#g-mode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === state.gmode)));
+    document.querySelectorAll("#g-order button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === state.gorder)));
+    $("gdur-out").textContent = state.gdur + " s";
+    $("g-again").disabled = state.gmode === "off";
+    $("g-note").textContent = state.gmode === "off" ? "Turn growth on and the study appears square by square." : `${GROW_NOTES[state.gmode]} It builds ${ORDER_NOTES[state.gorder]}.`;
+    const gn = $("v-grow-note");
+    gn.hidden = state.gmode === "off";
+    if (!gn.hidden) {
+      const len = clipPlan(state).len;
+      gn.textContent = state.gdur > len
+        ? `Growth is on and takes ${state.gdur} s, longer than this ${fmtSecs(len)} clip, so the clip ends part-grown. Set Growth time to ${Math.max(3, Math.floor(len))} s or less to see the whole study appear.`
+        : "Growth is on, so rendered clips start from an empty field and build themselves.";
+    }
+  }
+  document.querySelectorAll("#g-mode button").forEach(b => b.addEventListener("click", () => { state.gmode = b.dataset.v; restartGrowth(); changed(); }));
+  document.querySelectorAll("#g-order button").forEach(b => b.addEventListener("click", () => { state.gorder = b.dataset.v; restartGrowth(); changed(); }));
+  $("g-again").addEventListener("click", restartGrowth);
+
+  // ---------- live performance: pulses, keys, MIDI ----------
+  let pulses = [];
+  const perfStatus = msg => { $("perf-status").textContent = msg; };
+  function firePulse(amp) {
+    pulses.push({ t: performance.now() / 1000, amp: amp == null ? 1 : amp });
+    if (pulses.length > 6) pulses.shift();
+    needsDraw = true;
+  }
+  function livePulses() {
+    if (isOutput) return remote.pulses && performance.now() - remote.lastMsg < 1500 ? remote.pulses : [];
+    const now = performance.now() / 1000;
+    pulses = pulses.filter(pl => now - pl.t < 3);
+    return pulses.map(pl => ({ age: now - pl.t, amp: pl.amp }));
+  }
+  function toggleMotion(id) {
+    const ms = motionSet(state);
+    if (ms.has(id)) ms.delete(id); else { ms.add(id); state.playing = true; }
+    lastToggled = id;
+    state.motion = [...ms].join(",");
+    changed();
+  }
+  function cyclePalette(dir) {
+    const i = PALETTES.findIndex(pl => pl.id === state.palette);
+    state.palette = PALETTES[(i + dir + PALETTES.length) % PALETTES.length].id;
+    colorChanged();
+    changed();
+  }
+  document.addEventListener("keydown", e => {
+    const t = e.target, tag = t && t.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
+    if (e.metaKey || e.ctrlKey || e.altKey || !gl) return;
+    if (/^[1-8]$/.test(e.key)) { e.preventDefault(); toggleMotion(MOTIONS[+e.key - 1].id); }
+    else if (e.key === "[" || e.key === "]") { e.preventDefault(); cyclePalette(e.key === "]" ? 1 : -1); }
+    else if (e.key === "b" || e.key === "B") { e.preventDefault(); firePulse(1); }
+  });
+  $("p-pulse").addEventListener("click", () => firePulse(1));
+
+  const midi = { access: null, learn: false, target: null };
+  const sliderName = id => { const l = document.querySelector(`label[for="${id}"]`); return l ? l.textContent.trim() : id; };
+  function setFromMidi(id, v) {
+    const el = $(id);
+    if (!el) return;
+    const min = +el.min, max = +el.max, step = +el.step || 1;
+    const val = Math.round((min + v * (max - min)) / step) * step;
+    if (+el.value === val) return;
+    el.value = String(val);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  function onMidi(e) {
+    const d = e.data;
+    if (!d || d.length < 2) return;
+    const type = d[0] & 0xf0, a = d[1], b = d.length > 2 ? d[2] : 0;
+    if (type === 0xB0) {
+      if (midi.learn && midi.target) {
+        for (const k of Object.keys(state.midimap)) if (state.midimap[k] === midi.target) delete state.midimap[k];
+        state.midimap[a] = midi.target;
+        perfStatus(`Knob ${a} now controls ${sliderName(midi.target)}.`);
+        markLearn(null);
+        changed();
+        return;
+      }
+      const id = state.midimap[a] || (a === 1 ? "strength" : null);
+      if (id) setFromMidi(id, b / 127);
+    } else if (type === 0x90 && b > 0) {
+      firePulse(0.4 + 1.1 * b / 127);
+    }
+  }
+  function bindMidiInputs() {
+    if (!midi.access) return;
+    const names = [];
+    midi.access.inputs.forEach(inp => { inp.onmidimessage = onMidi; names.push(inp.name || "MIDI device"); });
+    $("midi-devices").textContent = names.length ? names.join(", ") : "no device found";
+    $("midi-area").hidden = !names.length;
+  }
+  async function connectMidi() {
+    if (!navigator.requestMIDIAccess) {
+      perfStatus(inClaude ? "MIDI controllers work in the app at serski.github.io/pixel-machine." : "This browser can't use MIDI controllers. Use Chrome or Edge.");
+      return;
+    }
+    try { midi.access = await navigator.requestMIDIAccess({ sysex: false }); }
+    catch (e) {
+      perfStatus(inClaude ? "MIDI controllers work in the app at serski.github.io/pixel-machine, not inside claude.ai." : "MIDI access was blocked. Allow it in the browser's site settings, then try again.");
+      return;
+    }
+    midi.access.onstatechange = bindMidiInputs;
+    bindMidiInputs();
+    $("midi-connect").textContent = "Connected";
+    $("midi-connect").disabled = true;
+    perfStatus("");
+  }
+  function markLearn(id) {
+    midi.target = id;
+    document.querySelectorAll(".ctrl.learning").forEach(c => c.classList.remove("learning"));
+    if (!id) return;
+    const c = $(id) && $(id).closest(".ctrl");
+    if (c) c.classList.add("learning");
+    perfStatus(`Now turn a knob for ${sliderName(id)}.`);
+  }
+  function renderMaps() {
+    const ul = $("midi-maps");
+    ul.innerHTML = "";
+    const entries = Object.entries(state.midimap).sort((x, y) => +x[0] - +y[0]);
+    for (const [cc, id] of entries) {
+      const li = document.createElement("li");
+      const sp = document.createElement("span");
+      sp.textContent = `Knob ${cc} → ${sliderName(id)}`;
+      const rm = document.createElement("button");
+      rm.type = "button";
+      rm.textContent = "Remove";
+      rm.addEventListener("click", () => { delete state.midimap[cc]; changed(); });
+      li.append(sp, rm);
+      ul.append(li);
+    }
+    ul.hidden = !entries.length;
+  }
+  $("midi-connect").addEventListener("click", connectMidi);
+  $("midi-learn").addEventListener("click", () => {
+    midi.learn = !midi.learn;
+    markLearn(null);
+    perfStatus(midi.learn ? "Click a slider, then turn a knob." : "");
+    updatePerfUI();
+  });
+  document.querySelectorAll('.panel input[type="range"]').forEach(el => {
+    const pick = () => { if (midi.learn && MIDI_TARGETS.includes(el.id)) markLearn(el.id); };
+    el.addEventListener("pointerdown", pick);
+    el.addEventListener("focus", pick);
+  });
+
+  // ---------- output window for a projector or second screen ----------
+  const live = { chan: null, outputSeen: 0, queued: false };
+  const remote = { audio: null, pulses: [], camOn: false, grow: null, lastMsg: 0 };
+  const outputConnected = () => performance.now() - live.outputSeen < 6000;
+  function openChannel() {
+    if (!window.BroadcastChannel) return;
+    try { live.chan = new BroadcastChannel("pixel-machine-live"); } catch (e) { live.chan = null; return; }
+    live.chan.onmessage = ev => onLive(ev.data || {});
+  }
+  function onLive(m) {
+    if (!isOutput) {
+      if (m.t === "hello" || m.t === "ping") {
+        const was = outputConnected();
+        live.outputSeen = performance.now();
+        if (m.t === "hello" || !was) sendState();
+        if (!was) updatePerfUI();
+      }
+      return;
+    }
+    if (m.t === "state" && m.state) {
+      Object.assign(state, m.state);
+      sanitize();
+      buildLUT();
+      updateLabel();
+      applyExhibitLook();
+      layout();
+      needsDraw = true;
+    } else if (m.t === "frame") {
+      time = m.time;
+      remote.audio = m.audio;
+      remote.pulses = m.pulses || [];
+      remote.grow = m.grow;
+      remote.camOn = !!m.camOn;
+      remote.lastMsg = performance.now();
+      if (m.cam) {
+        if (!cam.bytes || cam.W !== m.cam.W || cam.H !== m.cam.H) setCamSize(m.cam.W, m.cam.H);
+        cam.aspect = m.cam.aspect;
+        cam.bytes.set(m.cam.bytes);
+        cam.dirty = true;
+      }
+      needsDraw = true;
+    }
+  }
+  function sendState() { if (live.chan && !isOutput) live.chan.postMessage({ t: "state", state: JSON.parse(JSON.stringify(state)) }); }
+  function queueSendState() {
+    if (!live.chan || isOutput || live.queued || !outputConnected()) return;
+    live.queued = true;
+    setTimeout(() => { live.queued = false; sendState(); }, 60);
+  }
+  function sendFrame() {
+    if (!live.chan || isOutput || !outputConnected()) return;
+    const msg = { t: "frame", time, audio: liveAudio(), pulses: livePulses(), grow: growNow(), camOn: cam.on };
+    if (cam.on && cam.bytes && cam.sent !== cam.version) {
+      msg.cam = { W: cam.W, H: cam.H, aspect: cam.aspect, bytes: cam.bytes.slice() };
+      cam.sent = cam.version;
+    }
+    try { live.chan.postMessage(msg); } catch (e) { /* ignore */ }
+  }
+  function openOutput() {
+    if (inClaude) { perfStatus("The output window works in the app at serski.github.io/pixel-machine."); return; }
+    const url = location.origin + location.pathname + "#output";
+    const w = window.open(url, "pixel-machine-output", "popup=yes,width=1280,height=720");
+    perfStatus(w ? "Output window open. Drag it to the projector, click it, then press F for full screen." : "The browser blocked the window. Allow pop-ups for this site, then try again.");
+  }
+  function requestFull() {
+    const el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req) return;
+    try { const r = req.call(el, { navigationUI: "hide" }); if (r && r.catch) r.catch(() => {}); } catch (e) { /* ignore */ }
+  }
+  function startOutputMode() {
+    exhibit.output = true;
+    exhibit.active = true;
+    exhibit.startT = performance.now();
+    document.title = "Pixel Machine · output";
+    document.documentElement.classList.add("exhibiting");
+    app.classList.add("exhibit", "output");
+    $("ex-exit").hidden = false;
+    $("ex-leave").hidden = true;
+    $("ex-play").hidden = true;
+    $("ex-full").hidden = false;
+    $("ov-motion").hidden = true;
+    applyExhibitLook();
+    layout();
+    showChrome();
+    if (live.chan) {
+      live.chan.postMessage({ t: "hello" });
+      setInterval(() => live.chan.postMessage({ t: "ping" }), 2000);
+    }
+  }
+  function updatePerfUI() {
+    const l = $("midi-learn");
+    l.setAttribute("aria-pressed", String(midi.learn));
+    l.textContent = midi.learn ? "On" : "Off";
+    renderMaps();
+    $("p-output").textContent = outputConnected() ? "Output window connected" : "Open output window";
+  }
+  $("p-output").addEventListener("click", openOutput);
+  $("ex-full").addEventListener("click", requestFull);
+
+  // ---------- files: CRC-32, PNG resolution, ZIP ----------
+  const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(bytes) {
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) c = CRC_T[(c ^ bytes[i]) & 255] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  // Writes the print resolution into the PNG (a pHYs chunk right after the header), so printers see 300 dpi.
+  async function withDpi(blob, dpi) {
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    const ppm = Math.round(dpi / 0.0254);
+    const chunk = new Uint8Array(21), dv = new DataView(chunk.buffer);
+    dv.setUint32(0, 9);
+    chunk.set([0x70, 0x48, 0x59, 0x73], 4);
+    dv.setUint32(8, ppm);
+    dv.setUint32(12, ppm);
+    chunk[16] = 1;
+    dv.setUint32(17, crc32(chunk.subarray(4, 17)));
+    return new Blob([buf.subarray(0, 33), chunk, buf.subarray(33)], { type: "image/png" });
+  }
+  function makeZip(files) {
+    const enc = new TextEncoder(), parts = [], central = [];
+    const d = new Date();
+    const dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+    const dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    let offset = 0;
+    for (const f of files) {
+      const name = enc.encode(f.name), crc = crc32(f.data), size = f.data.length;
+      const lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+      lh.setUint16(10, dosTime, true); lh.setUint16(12, dosDate, true); lh.setUint32(14, crc, true);
+      lh.setUint32(18, size, true); lh.setUint32(22, size, true); lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+      parts.push(new Uint8Array(lh.buffer), name, f.data);
+      const ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+      ch.setUint16(10, 0, true); ch.setUint16(12, dosTime, true); ch.setUint16(14, dosDate, true); ch.setUint32(16, crc, true);
+      ch.setUint32(20, size, true); ch.setUint32(24, size, true); ch.setUint16(28, name.length, true);
+      ch.setUint32(42, offset, true);
+      central.push(new Uint8Array(ch.buffer), name);
+      offset += 30 + name.length + size;
+    }
+    const cdSize = central.reduce((a, b) => a + b.length, 0);
+    const end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+    return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: "application/zip" });
+  }
+  // Draws the work into a 2D canvas region tile by tile on the GPU, at any size.
+  async function paintArt(x2, P, dx, dy, aw, ah, liveInput, onTile) {
+    const T = Math.min(maxTile, Math.max(aw, ah));
+    ensureFbo(T, T);
+    const cpp = P.cols / aw, ss = cpp > 1.25 ? Math.min(3, Math.ceil(cpp)) : 1;
+    const nx = Math.ceil(aw / T), ny = Math.ceil(ah / T), now = performance.now();
+    for (let ty = 0; ty < ny; ty++) {
+      for (let tx = 0; tx < nx; tx++) {
+        const w = Math.min(T, aw - tx * T), h = Math.min(T, ah - ty * T);
+        drawGL(P, { fb: fbo, w, h, origin: [tx * T / aw, ty * T / ah], px: [1 / aw, 1 / ah], ss, flip: true, touch: liveInput, touchNow: now });
+        const buf = new Uint8Array(w * h * 4);
+        gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+        x2.putImageData(new ImageData(new Uint8ClampedArray(buf.buffer), w, h), dx + tx * T, dy + ty * T);
+        if (onTile) onTile((ty * nx + tx + 1) / (nx * ny));
+        await wait(0);
+      }
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    needsDraw = true;
+  }
+
+  // ---------- print ----------
+  const prStatus = msg => { $("pr-status").textContent = msg; };
+  let printing = false;
+  const captionLeft = () => `${ARTIST} — Study No. ${state.seed}, 2026`;
+  const captionRight = dm => `Pixel Machine · ${dm.cols} × ${dm.rows} squares`;
+  function printPlan() {
+    const paper = PAPERS.find(pp => pp.id === state.prpaper) || PAPERS[1];
+    const dm = dimsOf(state), a = dm.cols / dm.rows;
+    let W = paper.w, H = paper.h;
+    if ((a > 1.001 && W < H) || (a < 0.999 && W > H)) { const t = W; W = H; H = t; }
+    const b = state.prborder, caption = state.prcaption && b >= 10;
+    let aw = W - 2 * b, ah = aw / a;
+    if (ah > H - 2 * b) { ah = H - 2 * b; aw = ah * a; }
+    const x = (W - aw) / 2, y = (H - ah) / 2;
+    let dpi = state.prdpi;
+    const reduced = dpi === 300 && Math.round(W / 25.4 * 300) * Math.round(H / 25.4 * 300) > 72e6;
+    if (reduced) dpi = 150;
+    return { paper, W, H, b, x, y, aw, ah, dm, dpi, reduced, caption, capSize: Math.min(3.6, b * 0.22), capY: y + ah + Math.min(b * 0.55, 9) };
+  }
+  const vectorOk = () => { const dm = dimsOf(state); return dm.cols * dm.rows <= 250000; };
+  function updatePrintUI() {
+    document.querySelectorAll("#pr-papers .chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.id === state.prpaper)));
+    document.querySelectorAll("#pr-dpi button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === state.prdpi)));
+    const c = $("pr-caption");
+    c.setAttribute("aria-pressed", String(state.prcaption));
+    c.textContent = state.prcaption ? "On" : "Off";
+    $("prborder-out").textContent = state.prborder + " mm";
+    const pl = printPlan(), cm = v => +(v / 10).toFixed(1);
+    const pxW = Math.round(pl.W / 25.4 * pl.dpi), pxH = Math.round(pl.H / 25.4 * pl.dpi);
+    const shape = pl.W > pl.H ? "landscape" : pl.W < pl.H ? "portrait" : "square";
+    let txt = `${pl.paper.name}${pl.paper.cm ? " cm" : ""}, ${shape}, ${cm(pl.W)} × ${cm(pl.H)} cm. The work prints at ${cm(pl.aw)} × ${cm(pl.ah)} cm${pl.b ? ` inside a ${pl.b} mm border` : ", edge to edge"}${pl.caption ? ", with your signature line" : ""}. The PNG is ${fmt(pxW)} × ${fmt(pxH)} px at ${pl.dpi} dpi${pl.reduced ? ", lowered from 300 dpi to keep the file manageable" : ""}.`;
+    if (state.prcaption && !pl.caption) txt += " The signature line needs a border of 10 mm or more.";
+    $("pr-summary").textContent = txt;
+    const vec = vectorOk();
+    $("pr-pdf").disabled = $("pr-svg").disabled = !vec || printing;
+    $("pr-png").disabled = printing;
+    $("pr-vector-note").textContent = vec
+      ? "PDF and SVG draw every square as a shape, sharp at any size, with each tone on its own layer for printers and plotters."
+      : "PDF and SVG files are available up to 500 × 500 squares. For bigger grids, use the print PNG.";
+  }
+  async function savePrintPNG() {
+    if (!downloads || !gl || printing) return;
+    printing = true;
+    updatePrintUI();
+    const pl = printPlan(), ppm = pl.dpi / 25.4;
+    const Wp = Math.round(pl.W * ppm), Hp = Math.round(pl.H * ppm);
+    const ax = Math.round(pl.x * ppm), ay = Math.round(pl.y * ppm), aw = Math.round(pl.aw * ppm), ah = Math.round(pl.ah * ppm);
+    try {
+      const c = document.createElement("canvas");
+      c.width = Wp; c.height = Hp;
+      const x2 = c.getContext("2d");
+      x2.fillStyle = "#ffffff";
+      x2.fillRect(0, 0, Wp, Hp);
+      const P = fieldParams(state, time, true, { dims: pl.dm, audio: liveAudio(), pulses: livePulses() });
+      await paintArt(x2, P, ax, ay, aw, ah, true, f => { progressEl.style.width = (f * 100) + "%"; prStatus(`Drawing the print… ${Math.round(f * 100)}%`); });
+      if (pl.caption) {
+        const fs = Math.round(pl.capSize * ppm), yb = Math.round(pl.capY * ppm);
+        x2.fillStyle = "#1a1d21";
+        x2.font = `${fs}px Archivo, "Helvetica Neue", Arial, sans-serif`;
+        x2.textBaseline = "alphabetic";
+        x2.textAlign = "left";
+        x2.fillText(captionLeft(), ax, yb);
+        x2.textAlign = "right";
+        x2.fillText(captionRight(pl.dm), ax + aw, yb);
+      }
+      prStatus("Saving the PNG…");
+      const blob = await new Promise(res => c.toBlob(res, "image/png"));
+      if (!blob) throw new Error("no image");
+      const out = await withDpi(blob, pl.dpi);
+      prStatus("Confirm the save in the prompt.");
+      await saveFile(`${fileBase()}-print-${pl.paper.id}-${pl.dpi}dpi.png`, out, prStatus);
+    } catch (e) {
+      prStatus("This device couldn't build an image that large. Choose 150 dpi or a smaller paper size.");
+    }
+    progressEl.style.width = "0";
+    printing = false;
+    updatePrintUI();
+  }
+  // Reads the current frame one pixel per square and sorts the squares into tones, light to dark.
+  function cellTones() {
+    const dm = dimsOf(state), C = dm.cols, R = dm.rows;
+    const P = fieldParams(state, time, true, { dims: dm, audio: liveAudio(), pulses: livePulses() });
+    ensureFbo(C, R);
+    drawGL(P, { fb: fbo, w: C, h: R, origin: [0, 0], px: [1 / C, 1 / R], ss: 1, flip: true, touch: true });
+    const buf = new Uint8Array(C * R * 4);
+    gl.readPixels(0, 0, C, R, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    needsDraw = true;
+    const tones = [];
+    for (let lv = 0; lv < lut.L; lv++) {
+      const r = lut.r[lv], g = lut.g[lv], b = lut.b[lv];
+      if (!tones.some(t => t.r === r && t.g === g && t.b === b)) tones.push({ r, g, b, y: 0.2126 * r + 0.7152 * g + 0.0722 * b });
+    }
+    tones.sort((p1, p2) => p2.y - p1.y);
+    const key = (r, g, b) => (r << 16) | (g << 8) | b;
+    const map = new Map(tones.map((t, i) => [key(t.r, t.g, t.b), i]));
+    const rank = new Uint8Array(C * R);
+    for (let i = 0; i < C * R; i++) {
+      const r = buf[i * 4], g = buf[i * 4 + 1], b = buf[i * 4 + 2], k = key(r, g, b);
+      let ri = map.get(k);
+      if (ri === undefined) {
+        let best = 0, bd = Infinity;
+        tones.forEach((t, j) => { const dd = (t.r - r) ** 2 + (t.g - g) ** 2 + (t.b - b) ** 2; if (dd < bd) { bd = dd; best = j; } });
+        ri = best;
+        map.set(k, ri);
+      }
+      rank[i] = ri;
+    }
+    return { C, R, rank, tones, dm };
+  }
+  // Each tone becomes one layer covering its squares and every darker one, stacked light to dark, so shapes never leave gaps.
+  function toneRuns(ct) {
+    const { C, R, rank, tones } = ct, layers = [];
+    let total = 0;
+    for (let k = 1; k < tones.length; k++) {
+      const runs = [];
+      for (let y = 0; y < R; y++) {
+        const row = y * C;
+        let x = 0;
+        while (x < C) {
+          if (rank[row + x] >= k) { const st = x; while (x < C && rank[row + x] >= k) x++; runs.push(st, y, x - st); }
+          else x++;
+        }
+      }
+      total += runs.length / 3;
+      layers.push({ tone: tones[k], runs });
+    }
+    return { layers, total };
+  }
+  const hexOf = t => "#" + [t.r, t.g, t.b].map(v => v.toString(16).padStart(2, "0")).join("");
+  const xmlEsc = str => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function buildSVG(pl, ct, tr) {
+    const f = v => +v.toFixed(3), cs = +(pl.aw / ct.C).toFixed(6), out = [];
+    const font = 'font-family="Archivo, Helvetica, Arial, sans-serif"';
+    out.push(`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${f(pl.W)}mm" height="${f(pl.H)}mm" viewBox="0 0 ${f(pl.W)} ${f(pl.H)}">\n`);
+    out.push(`<title>${xmlEsc(captionLeft())}</title>\n<desc>${xmlEsc(`Pixel Machine. ${ct.C} × ${ct.R} squares in ${ct.tones.length} tones. Each tone is a layer that covers its squares and every darker one.`)}</desc>\n`);
+    out.push(`<rect width="${f(pl.W)}" height="${f(pl.H)}" fill="#ffffff"/>\n`);
+    out.push(`<g id="artwork" transform="translate(${f(pl.x)} ${f(pl.y)}) scale(${cs})">\n`);
+    out.push(`<rect id="tone-1" width="${ct.C}" height="${ct.R}" fill="${hexOf(ct.tones[0])}"/>\n`);
+    tr.layers.forEach((L, i) => {
+      const r = L.runs, d = [];
+      for (let j = 0; j < r.length; j += 3) d.push(`M${r[j]} ${r[j + 1]}h${r[j + 2]}v1h-${r[j + 2]}z`);
+      out.push(`<path id="tone-${i + 2}" fill="${hexOf(L.tone)}" d="${d.join("")}"/>\n`);
+    });
+    out.push(`</g>\n`);
+    if (pl.caption) {
+      out.push(`<text x="${f(pl.x)}" y="${f(pl.capY)}" ${font} font-size="${f(pl.capSize)}" fill="#1a1d21">${xmlEsc(captionLeft())}</text>\n`);
+      out.push(`<text x="${f(pl.x + pl.aw)}" y="${f(pl.capY)}" text-anchor="end" ${font} font-size="${f(pl.capSize)}" fill="#1a1d21">${xmlEsc(captionRight(ct.dm))}</text>\n`);
+    }
+    out.push(`</svg>\n`);
+    return new Blob(out, { type: "image/svg+xml" });
+  }
+  async function buildPDF(pl, ct, tr) {
+    const k = 72 / 25.4, f = v => +v.toFixed(3);
+    const Wpt = f(pl.W * k), Hpt = f(pl.H * k), cs = +(pl.aw / ct.C).toFixed(6);
+    const rgb = t => `${+(t.r / 255).toFixed(4)} ${+(t.g / 255).toFixed(4)} ${+(t.b / 255).toFixed(4)} rg\n`;
+    const parts = [`q\n1 1 1 rg 0 0 ${Wpt} ${Hpt} re f\n`];
+    // Millimetres with y running down, then square units inside the artwork.
+    parts.push(`${f(k)} 0 0 ${f(-k)} 0 ${Hpt} cm\n${cs} 0 0 ${cs} ${f(pl.x)} ${f(pl.y)} cm\n`);
+    parts.push(rgb(ct.tones[0]) + `0 0 ${ct.C} ${ct.R} re f\n`);
+    for (const L of tr.layers) {
+      const r = L.runs, seg = [rgb(L.tone)];
+      for (let j = 0; j < r.length; j += 3) seg.push(`${r[j]} ${r[j + 1]} ${r[j + 2]} 1 re\n`);
+      seg.push("f\n");
+      parts.push(seg.join(""));
+    }
+    parts.push("Q\n");
+    if (pl.caption) {
+      const fs = f(pl.capSize * k), yb = f(Hpt - pl.capY * k);
+      const pdfText = str => "(" + str.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)").replace(/—/g, "\x97").replace(/·/g, "\xb7").replace(/×/g, "\xd7") + ")";
+      const mc = document.createElement("canvas").getContext("2d");
+      mc.font = "100px Helvetica, Arial, sans-serif";
+      const rightText = captionRight(ct.dm), rw = mc.measureText(rightText).width / 100 * fs;
+      parts.push(`BT /F1 ${fs} Tf 0.102 0.114 0.129 rg ${f(pl.x * k)} ${yb} Td ${pdfText(captionLeft())} Tj ET\n`);
+      parts.push(`BT /F1 ${fs} Tf 0.102 0.114 0.129 rg ${f((pl.x + pl.aw) * k - rw)} ${yb} Td ${pdfText(rightText)} Tj ET\n`);
+    }
+    const src = parts.join(""), content = new Uint8Array(src.length);
+    for (let i = 0; i < src.length; i++) content[i] = src.charCodeAt(i) & 255;
+    let data = content, filter = "";
+    if (window.CompressionStream) {
+      try {
+        data = new Uint8Array(await new Response(new Blob([content]).stream().pipeThrough(new CompressionStream("deflate"))).arrayBuffer());
+        filter = " /Filter /FlateDecode";
+      } catch (e) { data = content; filter = ""; }
+    }
+    const info = str => "(" + str.replace(/[\\()]/g, m => "\\" + m).replace(/[^\x20-\x7e]/g, "-") + ")";
+    const objs = [
+      "<< /Type /Catalog /Pages 2 0 R >>",
+      "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${Wpt} ${Hpt}] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>`,
+      [`<< /Length ${data.length}${filter} >>\nstream\n`, data, "\nendstream"],
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
+      `<< /Title ${info(`Study No. ${state.seed}, 2026`)} /Author ${info(ARTIST)} /Creator (Pixel Machine) /Subject ${info(`${ct.C} x ${ct.R} squares in ${ct.tones.length} tones`)} >>`,
+    ];
+    const enc = new TextEncoder(), chunks = [], offs = [];
+    let pos = 0;
+    const put = x => { const b = typeof x === "string" ? enc.encode(x) : x; chunks.push(b); pos += b.length; };
+    put("%PDF-1.4\n");
+    put(new Uint8Array([37, 226, 227, 207, 211, 10]));
+    objs.forEach((o, i) => { offs.push(pos); put(`${i + 1} 0 obj\n`); (Array.isArray(o) ? o : [o]).forEach(put); put("\nendobj\n"); });
+    const xref = pos;
+    put(`xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offs.map(o => String(o).padStart(10, "0") + " 00000 n \n").join(""));
+    put(`trailer\n<< /Size ${objs.length + 1} /Root 1 0 R /Info 6 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+    return new Blob(chunks, { type: "application/pdf" });
+  }
+  async function saveVector(kind) {
+    if (!downloads || !gl || printing) return;
+    if (!vectorOk()) { prStatus("PDF and SVG files are available up to 500 × 500 squares. For bigger grids, use the print PNG."); return; }
+    printing = true;
+    updatePrintUI();
+    prStatus("Tracing the squares…");
+    await wait(30);
+    try {
+      const pl = printPlan(), ct = cellTones(), tr = toneRuns(ct);
+      if (tr.total > 900000) {
+        prStatus("This study has too many separate squares for a vector file. Lower the grain, or use the print PNG.");
+      } else {
+        const blob = kind === "pdf" ? await buildPDF(pl, ct, tr) : buildSVG(pl, ct, tr);
+        prStatus("Confirm the save in the prompt.");
+        await saveFile(`${fileBase()}-print-${pl.paper.id}.${kind}`, blob, prStatus);
+      }
+    } catch (e) {
+      prStatus(`The ${kind.toUpperCase()} couldn't be made${e && e.message ? ` (${e.message})` : ""}.`);
+    }
+    printing = false;
+    updatePrintUI();
+  }
+  PAPERS.forEach(pp => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip word";
+    b.id = "paper-" + pp.id;
+    b.dataset.id = pp.id;
+    b.textContent = pp.name;
+    b.addEventListener("click", () => { state.prpaper = pp.id; changed(); });
+    $("pr-papers").append(b);
+  });
+  document.querySelectorAll("#pr-dpi button").forEach(b => b.addEventListener("click", () => { state.prdpi = +b.dataset.v; changed(); }));
+  $("pr-caption").addEventListener("click", () => { state.prcaption = !state.prcaption; changed(); });
+  $("pr-png").addEventListener("click", savePrintPNG);
+  $("pr-pdf").addEventListener("click", () => saveVector("pdf"));
+  $("pr-svg").addEventListener("click", () => saveVector("svg"));
+
+  // ---------- TV and screensaver ----------
+  const tvStatus = msg => { $("tv-status").textContent = msg; };
+  let tvBusy = false;
+  function tvLink() {
+    const web = /^https?:$/.test(location.protocol) && !inClaude && !/(^|\.)claude\.ai$/.test(location.hostname);
+    return (web ? location.origin + location.pathname : APP_URL) + "?tv";
+  }
+  function updateTvUI() {
+    $("tv-link").textContent = tvLink().replace(/^https?:\/\//, "");
+    document.querySelectorAll("#tv-count button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === state.tvcount)));
+    if (!tvBusy) $("tv-pack").textContent = `Save ${state.tvcount} screensaver images (4K)`;
+    $("tv-pack").disabled = tvBusy;
+  }
+  $("tv-copy").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(tvLink());
+      $("tv-copy").textContent = "Copied";
+      setTimeout(() => { $("tv-copy").textContent = "Copy"; }, 1600);
+    } catch (e) {
+      const r = document.createRange();
+      r.selectNodeContents($("tv-link"));
+      const sel = getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+      tvStatus("Press Ctrl+C or ⌘C to copy the link.");
+    }
+  });
+  async function saveTvPack() {
+    if (!downloads || !gl || tvBusy) return;
+    tvBusy = true;
+    updateTvUI();
+    const n = state.tvcount, W = 3840, H = 2160, dm = dimsFor(state.grid, 16, 9);
+    const files = [];
+    try {
+      const c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      const x2 = c.getContext("2d");
+      for (let i = 0; i < n; i++) {
+        $("tv-pack").textContent = `Making image ${i + 1} of ${n}…`;
+        const seed = 1000 + ((state.seed * 37 + i * 7919) % 9000);
+        const snap = Object.assign(JSON.parse(JSON.stringify(state)), { seed, wells: seedWells(seed, [state.wells[0].x, state.wells[0].y]) });
+        await paintArt(x2, fieldParams(snap, time + i * 7.3, true, { dims: dm }), 0, 0, W, H, false, f => { progressEl.style.width = ((i + f) / n * 100) + "%"; });
+        const blob = await new Promise(res => c.toBlob(res, "image/png"));
+        if (!blob) throw new Error("no image");
+        files.push({ name: `pixel-machine-argiris-ser-study-${seed}-4k.png`, data: new Uint8Array(await blob.arrayBuffer()) });
+      }
+      progressEl.style.width = "0";
+      tvStatus("Confirm the save in the prompt.");
+      await saveFile(`pixel-machine-argiris-ser-tv-screensaver-${n}.zip`, makeZip(files), tvStatus);
+    } catch (e) {
+      progressEl.style.width = "0";
+      tvStatus("This device couldn't make the 4K images. Try fewer images.");
+    }
+    tvBusy = false;
+    updateTvUI();
+  }
+  $("tv-pack").addEventListener("click", saveTvPack);
+  document.querySelectorAll("#tv-count button").forEach(b => b.addEventListener("click", () => { state.tvcount = +b.dataset.v; changed(); }));
+  $("tv-loop").addEventListener("click", () => {
+    Object.assign(state, { format: "16x9", vsize: 2160, vlen: 60, vfps: 30, vloop: true, vspeed: 1, vmusic: false });
+    if (!motionSet(state).size) { state.motion = "flow"; lastToggled = "flow"; }
+    view.z = 1; view.x = view.y = 0.5;
+    layout();
+    changed();
+    jumpTo("video");
+    vStatus("Set up for TVs: Wide 16:9, 4K, 60 s, seamless loop. Press Render video.");
+  });
+  function showHint(text, ms) {
+    const h = $("ex-hint");
+    h.textContent = text;
+    h.hidden = false;
+    h.classList.remove("gone");
+    clearTimeout(showHint.t);
+    showHint.t = setTimeout(() => { h.classList.add("gone"); setTimeout(() => { h.hidden = true; }, 700); }, ms || 6000);
+  }
+  function startTvMode() {
+    exhibit.tv = true;
+    if (gl && !motionSet(state).size) state.motion = "flow,drift,breathe";
+    state.exFill = true;
+    state.exWander = true;
+    if (state.exquality === "full") state.exquality = "balanced";
+    if (!state.exchange) state.exchange = 15;
+    enterExhibit();
+    showHint("OK: new study · ◀ ▶ palette · ▲ ▼ speed", 7000);
+  }
+  function bootLive() {
+    openChannel();
+    if (!gl) ["camera", "growth", "perform"].forEach(id => { $(id).hidden = true; });
+    refreshJump();
+    if (isOutput) { startOutputMode(); return; }
+    setInterval(updatePerfUI, 3000);
+    if (tvMode) startTvMode();
+  }
+
   // ---------- quick links ----------
   function jumpTo(id) {
     const el = $(id);
@@ -2838,6 +4039,7 @@ void main() {
     if (window.ResizeObserver) new ResizeObserver(layout).observe(box);
     else window.addEventListener("resize", layout);
     refreshJump();
+    bootLive();
     requestAnimationFrame(loop);
   }
   const hot = window.claude && window.claude.hot;

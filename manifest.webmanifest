@@ -1,0 +1,35 @@
+{
+  "id": "./",
+  "name": "Pixel Machine",
+  "short_name": "Pixel Machine",
+  "description": "Pixel Machine by Argiris Ser: stepped tone fields built from square pixels, still, moving, reacting to music, or full screen.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#e4e7ea",
+  "theme_color": "#111518",
+  "categories": [
+    "art",
+    "design",
+    "music"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

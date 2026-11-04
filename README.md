@@ -11,12 +11,13 @@ as an installation.
 
 ## Install it as an app
 
-Open the link above, then:
+Open the link above and press the button under the title (**Install Pixel Machine**, **Add to Home Screen** or **Add to Dock**). It installs the app, or shows the steps where the browser doesn't allow a one-tap install:
 
-- **Computer (Chrome or Edge):** click **Install Pixel Machine** in the panel, or the install icon in the address bar.
-- **Mac (Safari):** File menu, then **Add to Dock**.
-- **iPhone or iPad (Safari):** tap **Share**, then **Add to Home Screen**.
+- **iPhone or iPad:** tap **Share** (on newer iPhones, tap **•••** first), then **Add to Home Screen**, then **Add**. Apple doesn't let websites install themselves, so these steps are the only way.
+- **Opened from Instagram or another app:** open the page in Safari or Chrome first, then follow the steps above.
 - **Android (Chrome):** tap **Install Pixel Machine**, or the browser menu, then **Install app**.
+- **Computer (Chrome or Edge):** click **Install Pixel Machine**, or the install icon in the address bar.
+- **Mac (Safari):** File menu, then **Add to Dock**.
 
 Once installed it opens in its own window and works offline.
 

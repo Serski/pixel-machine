@@ -31,6 +31,7 @@ Once installed it opens in its own window and works offline.
 - Music: load a song and the work pulses, sends rings out on the beat, surges and sparkles with it
 - Touch and mouse play: ripple, swirl, push and ink
 - Exhibition mode: full screen, controls hidden, the screen kept awake
+- Canvas links: one link that opens an exact study full screen on any screen
 - Growth: the study builds itself square by square, from the core, scattered or row by row, once or on a loop
 - Space: load a LiDAR scan of a room or a place and rebuild it in pixel cubes, covering its surfaces or filling its air, then walk around it in AR
 
@@ -45,6 +46,21 @@ Camera and microphone are processed on the device. Nothing is recorded, saved or
 - Saves PNGs and MP4 videos (slow motion to time-lapse, up to 4K, with the song's sound), and USDZ files for AR from Space
 - Print: A4 to A1 and square or poster sizes in cm, border, signature line, 150 or 300 dpi PNG, plus PDF and SVG vector files with one layer per tone
 - TV: a TV link, 4K screensaver images and seamless TV loop videos
+
+## Canvas links: one exact work on any screen
+
+In the app, open **Canvas link**. It gives a link that opens the current study exactly as it is,
+full screen and moving: the same study number, palette, shape, grid, centers and movement, plus the
+Exhibition settings (fill, caption, wander, picture quality).
+
+- Open it on a TV browser, a tablet, or a computer behind a screen, or make it the screen's start page.
+- Send it to a collector, so their screen shows their study, live.
+- A canvas stays on its study: it doesn't change by itself, and OK or the arrow keys don't change it.
+- It never saves over the Pixel Machine settings of the screen it opens on.
+- Tap, click or press OK for full screen.
+
+Links stay short because they only list what differs from the defaults, for example
+`https://serski.github.io/pixel-machine/?canvas=4821&g=200&f=9x16&p=glacier`.
 
 ## On a TV or as a screensaver
 

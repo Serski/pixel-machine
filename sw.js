@@ -1,6 +1,6 @@
 // Pixel Machine by Argiris Ser: offline support.
 // tools/build.py fills in VERSION from the app's contents, so installed copies refresh after each update.
-const VERSION = "pixel-machine-f56869eb84";
+const VERSION = "pixel-machine-c48a4ff0bd";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-32.png"];
 
 self.addEventListener("install", event => {

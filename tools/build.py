@@ -148,7 +148,7 @@ install_js = """<dialog id="install-help" aria-labelledby="install-title">
   });
   let deferred = null, mode = null;
   const show = (m, text) => { mode = m; label.textContent = text; btn.hidden = false; };
-  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; show("prompt", "Install Pixel Machine"); });
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); if (/[?&]canvas=/.test(location.search)) return; deferred = e; show("prompt", "Install Pixel Machine"); });
   btn.addEventListener("click", async () => {
     if (mode === "prompt" && deferred) {
       const ev = deferred;
@@ -161,7 +161,9 @@ install_js = """<dialog id="install-help" aria-labelledby="install-title">
     showHelp();
   });
   window.addEventListener("appinstalled", () => { btn.hidden = true; });
-  if (!installed && location.protocol !== "file:") {
+  // A canvas link shows one work; installing from it would open the studio instead, so it isn't offered there.
+  const onCanvas = /[?&]canvas=/.test(location.search);
+  if (!installed && !onCanvas && location.protocol !== "file:") {
     if (isIOS || (inApp && isAndroid)) show("help", "Add to Home Screen");
     else if (macSafari) show("help", "Add to Dock");
     else if (isAndroid) setTimeout(() => { if (!mode) show("help", "Add to Home screen"); }, 3500);

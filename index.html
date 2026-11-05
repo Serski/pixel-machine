@@ -540,6 +540,8 @@ kbd {
 .pbtns { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 .tvlink { display: flex; gap: 8px; align-items: center; min-width: 0; }
 .tvlink code { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-family: var(--f-mono); font-size: 12px; background: var(--chip); padding: 8px 10px; border-radius: 2px; }
+.brand .cv-banner { margin-top: 12px; padding: 9px 11px; max-width: none; background: var(--chip); border-left: 3px solid var(--accent); color: var(--ink); font-size: 13px; }
+.cv-banner a { color: var(--accent); font-weight: 650; }
 .note strong { color: var(--ink); font-weight: 650; }
 .ex-hint {
   position: fixed;
@@ -557,6 +559,7 @@ kbd {
   white-space: nowrap;
 }
 .ex-hint.gone { opacity: 0; }
+@media (max-width: 640px) { .ex-hint { bottom: auto; top: max(72px, calc(env(safe-area-inset-top, 0px) + 64px)); } }
 
 @media (max-width: 860px) {
   html, body { height: auto; }
@@ -633,6 +636,7 @@ kbd {
       <h1>Pixel<br>Machine</h1>
       <p class="byline">By Argiris Ser</p>
       <p>Stepped tone fields built from square pixels, from a 20 × 20 study up to 5000 × 5000. Still, moving, or full screen.</p>
+      <p class="cv-banner" id="cv-banner" hidden>You're viewing a canvas link for <span id="cv-banner-title">Study No. 4821, 2026</span>. Changes here aren't saved. <a href="./" id="cv-own">Make your own</a></p>
       <button type="button" class="btn primary wide install-btn" id="install-app" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8.5v7M8.5 12h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         <span id="install-label">Install Pixel Machine</span>
@@ -647,6 +651,7 @@ kbd {
       <button type="button" data-to="video" hidden>Video</button>
       <button type="button" data-to="sec-print" hidden>Print</button>
       <button type="button" data-to="exhibition">Exhibit</button>
+      <button type="button" data-to="sec-canvas">Canvas</button>
       <button type="button" data-to="sec-tv">TV</button>
       <button type="button" data-to="perform">Live</button>
       <button type="button" data-to="sec-color">Color</button>
@@ -1022,6 +1027,20 @@ kbd {
       <p class="note">Runs full screen with the controls hidden and keeps the screen awake. Visitors can play with touch or the mouse. Press <kbd>Esc</kbd> or Exit to leave.</p>
     </section>
 
+    <section class="group" id="sec-canvas">
+      <h2>Canvas link <small>this exact work on any screen</small></h2>
+      <p class="note">One link that opens this study exactly as it is now, full screen and moving: the same number, palette, shape, grid and movement. Open it on a TV, a tablet or a computer behind a screen, set it as a screen's start page, or send it to a collector. The canvas stays on this study and never changes that screen's own Pixel Machine.</p>
+      <div class="tvlink"><code id="cv-link">serski.github.io/pixel-machine/?canvas=4821</code></div>
+      <div class="actions" id="cv-actions">
+        <button type="button" class="btn" id="cv-copy">Copy link</button>
+        <button type="button" class="btn primary" id="cv-share">Share link</button>
+      </div>
+      <button type="button" class="btn wide" id="cv-open">Preview the canvas</button>
+      <p class="note">Fill, caption, wander and picture quality come from Exhibition above. On a TV, Balanced quality runs smoothest.</p>
+      <p class="note" id="cv-space-note" hidden>Canvas links show the flat study. A scan stays on this device.</p>
+      <p class="status" id="cv-status" aria-live="polite"></p>
+    </section>
+
     <section class="group" id="sec-tv">
       <h2>TV and screensaver</h2>
       <p class="note">Open this link in your smart TV's web browser. It starts full screen and keeps changing by itself. On the remote, OK makes a new study, left and right change the palette, up and down change the speed.</p>
@@ -1273,7 +1292,10 @@ kbd {
   const MIDI_TARGETS = ["speed", "strength", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "levels", "hue", "tstrength", "tsize", "msens", "mvol", "cstrength", "gdur", "spspread", "spcx", "spcy", "spcz", "spdens", "spcut"];
   const APP_URL = "https://serski.github.io/pixel-machine/";
   const isOutput = location.hash === "#output";
-  const tvMode = /[?&]tv\b/.test(location.search) || location.hash === "#tv";
+  // A canvas link (?canvas=4821&…) opens one exact work full screen and leaves the screen's own settings alone.
+  const canvasParams = (() => { try { const q = new URLSearchParams(location.search); return q.has("canvas") ? q : null; } catch (e) { return null; } })();
+  const canvasMode = !!canvasParams && !isOutput;
+  const tvMode = !canvasMode && (/[?&]tv\b/.test(location.search) || location.hash === "#tv");
   const inClaude = !!(window.claude && typeof window.claude.use === "function");
 
   // ---------- state ----------
@@ -1319,6 +1341,8 @@ kbd {
     return w;
   }
   state.wells = seedWells(state.seed);
+  // Center positions keep four decimals, so a canvas link can carry them exactly.
+  const q4 = v => Math.round(v * 1e4) / 1e4;
   const motionSet = s => new Set((s.motion || "").split(",").filter(id => MOTION_IDS.has(id)));
 
   const STORE_KEY = "pixel-machine-v1";
@@ -1338,6 +1362,7 @@ kbd {
     sanitize();
   }
   function sanitize() {
+    if (Array.isArray(state.wells)) state.wells.forEach(w => { w.x = q4(w.x); w.y = q4(w.y); });
     if (!GRIDS.includes(state.grid)) state.grid = DEFAULTS.grid;
     if (!FORMATS.some(f => f.id === state.format)) state.format = "1x1";
     if (!PALETTES.some(p => p.id === state.palette)) state.palette = DEFAULTS.palette;
@@ -1378,7 +1403,7 @@ kbd {
   }
   let persistTimer = 0;
   function persist() {
-    if (isOutput) return;
+    if (isOutput || canvasMode) return;
     clearTimeout(persistTimer);
     persistTimer = setTimeout(() => { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }, 250);
   }
@@ -2345,6 +2370,7 @@ void main() {
     updateGrowthUI();
     updatePrintUI();
     updateTvUI();
+    updateCanvasUI();
     updatePerfUI();
     updateSpaceUI();
     updateLabel();
@@ -2427,8 +2453,8 @@ void main() {
   function moveWell(k, u, v) {
     let ox = 0, oy = 0;
     if (gl && motionSet(state).has("drift")) { const o = driftOffset(k, time, state.strength / 100); ox = o[0]; oy = o[1]; }
-    state.wells[k].x = Math.max(-1.3, Math.min(1.3, u - ox));
-    state.wells[k].y = Math.max(-1.3, Math.min(1.3, v - oy));
+    state.wells[k].x = q4(Math.max(-1.3, Math.min(1.3, u - ox)));
+    state.wells[k].y = q4(Math.max(-1.3, Math.min(1.3, v - oy)));
     needsDraw = true;
   }
   function bindCanvas() {
@@ -2484,7 +2510,7 @@ void main() {
       const d = drags.get(e.pointerId);
       drags.delete(e.pointerId);
       if (e.pointerType !== "mouse" || e.type === "pointerleave") lastEmit.delete(e.pointerId);
-      if (d && d.mode === "move") persist();
+      if (d && d.mode === "move") { persist(); updateCanvasUI(); }
     };
     art.addEventListener("pointerup", endDrag);
     art.addEventListener("pointercancel", endDrag);
@@ -2543,7 +2569,7 @@ void main() {
     exhibit.wentFullscreen = false;
     exhibit.lastChange = performance.now();
     exhibit.pendingChange = false;
-    if (gl && !motionSet(state).size) { state.motion = "flow"; lastToggled = "flow"; }
+    if (gl && !motionSet(state).size && !canvasMode) { state.motion = "flow"; lastToggled = "flow"; }
     if (gl) state.playing = true;
     view.z = 1; view.x = view.y = 0.5;
     touches = [];
@@ -2600,8 +2626,9 @@ void main() {
     showChrome();
     if (e.key === "Escape") { e.preventDefault(); if (!exhibit.output) exitExhibit(); }
     else if (e.key === " ") { e.preventDefault(); if (gl) togglePlay(); }
-    else if (e.key === "n" || e.key === "N") newVariation();
     else if (e.key === "m" || e.key === "M") toggleMusic();
+    else if (canvasMode) { if (e.key === "f" || e.key === "F" || e.key === "Enter") { e.preventDefault(); canvasFull(); } }
+    else if (e.key === "n" || e.key === "N") newVariation();
     else if ((e.key === "f" || e.key === "F") && exhibit.output) requestFull();
     // TV remotes
     else if (e.key === "Enter") { e.preventDefault(); newVariation(); }
@@ -3795,7 +3822,7 @@ void main() {
     $("p-output").textContent = outputConnected() ? "Output window connected" : "Open output window";
   }
   $("p-output").addEventListener("click", openOutput);
-  $("ex-full").addEventListener("click", requestFull);
+  $("ex-full").addEventListener("click", () => (canvasMode ? canvasFull() : requestFull()));
 
   // ---------- files: CRC-32, PNG resolution, ZIP ----------
   const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
@@ -4112,13 +4139,61 @@ void main() {
   $("pr-pdf").addEventListener("click", () => saveVector("pdf"));
   $("pr-svg").addEventListener("click", () => saveVector("svg"));
 
+  // ---------- canvas link ----------
+  const cvStatus = msg => { $("cv-status").textContent = msg; };
+  const canShare = typeof navigator.share === "function";
+  if (!canShare) { $("cv-share").hidden = true; $("cv-copy").classList.add("primary"); $("cv-actions").style.gridTemplateColumns = "1fr"; }
+  function updateCanvasUI() {
+    $("cv-link").textContent = canvasLink().replace(/^https?:\/\//, "");
+    $("cv-space-note").hidden = !space.active;
+  }
+  $("cv-copy").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(canvasLink());
+      $("cv-copy").textContent = "Copied";
+      setTimeout(() => { $("cv-copy").textContent = "Copy link"; }, 1600);
+      cvStatus("");
+    } catch (e) {
+      const r = document.createRange();
+      r.selectNodeContents($("cv-link"));
+      const sel = getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+      cvStatus("Press Ctrl+C or ⌘C to copy the link.");
+    }
+  });
+  $("cv-share").addEventListener("click", async () => {
+    try { await navigator.share({ title: `Study No. ${state.seed}, 2026 · Argiris Ser`, text: `Study No. ${state.seed}, a living canvas by Argiris Ser, made with Pixel Machine.`, url: canvasLink() }); cvStatus(""); }
+    catch (e) { if (!e || e.name !== "AbortError") cvStatus("Sharing isn't available here. Use Copy link instead."); }
+  });
+  $("cv-open").addEventListener("click", () => {
+    const w = window.open(canvasLink(), "_blank");
+    if (w) { try { w.opener = null; } catch (e) { /* ignore */ } cvStatus(""); }
+    else cvStatus("The preview couldn't open here. Copy the link and open it in a browser.");
+  });
+  const fullscreenable = () => { const el = document.documentElement; return !!(el.requestFullscreen || el.webkitRequestFullscreen); };
+  function canvasFull() {
+    if (!exhibit.active || document.fullscreenElement || document.webkitFullscreenElement) return;
+    requestFull();
+  }
+  function startCanvasMode() {
+    state.exchange = 0;
+    document.title = `Study No. ${state.seed}, 2026 · Argiris Ser · Pixel Machine`;
+    $("cv-banner-title").textContent = `Study No. ${state.seed}, 2026`;
+    $("cv-banner").hidden = false;
+    enterExhibit();
+    if (fullscreenable()) {
+      $("ex-full").hidden = false;
+      const standalone = matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches;
+      if (!standalone) showHint(coarse ? "Tap for full screen" : "Click or press OK for full screen", 6000);
+    }
+  }
+  stage.addEventListener("click", e => { if (canvasMode && !(e.target.closest && e.target.closest("button"))) canvasFull(); });
+
   // ---------- TV and screensaver ----------
   const tvStatus = msg => { $("tv-status").textContent = msg; };
   let tvBusy = false;
-  function tvLink() {
-    const web = /^https?:$/.test(location.protocol) && !inClaude && !/(^|\.)claude\.ai$/.test(location.hostname);
-    return (web ? location.origin + location.pathname : APP_URL) + "?tv";
-  }
+  function tvLink() { return appBase() + "?tv"; }
   function updateTvUI() {
     $("tv-link").textContent = tvLink().replace(/^https?:\/\//, "");
     document.querySelectorAll("#tv-count button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === state.tvcount)));
@@ -4198,12 +4273,13 @@ void main() {
     showHint("OK: new study · ◀ ▶ palette · ▲ ▼ speed", 7000);
   }
   function bootLive() {
-    openChannel();
+    if (!canvasMode) openChannel();
     if (!gl) ["camera", "growth", "perform"].forEach(id => { $(id).hidden = true; });
     refreshJump();
     if (isOutput) { startOutputMode(); return; }
     setInterval(updatePerfUI, 3000);
     if (tvMode) startTvMode();
+    else if (canvasMode) startCanvasMode();
   }
 
   // ---------- Space: fill a scanned place with pixels ----------
@@ -5190,9 +5266,64 @@ void main() {
   document.querySelectorAll("#jump button").forEach(b => b.addEventListener("click", () => jumpTo(b.dataset.to)));
   $("ov-video").addEventListener("click", () => jumpTo("video"));
 
+  // ---------- canvas links: one exact work on any screen ----------
+  // The values a link leaves out. Fixed here, not taken from DEFAULTS, so old links keep their look.
+  const CANVAS_BASE = {
+    grid: 50, format: "1x1", levels: 12, reach: 100, falloff: 85, round: 50, stretch: 18, tilt: 0, centers: 1, warp: 30, grain: 35,
+    palette: "cerulean", hue: 229, invert: false, motion: "flow", speed: 40, strength: 40, touch: "ripple", tstrength: 60, tsize: 40,
+    gmode: "off", gorder: "core", gdur: 20, exFill: true, exSurround: "black", exWander: true, exCaption: true, exquality: "full",
+  };
+  // Key in the link, setting, and the allowed range for numbers.
+  const CANVAS_KEYS = [
+    ["g", "grid"], ["f", "format"], ["l", "levels", 2, 32], ["r", "reach", 40, 180], ["fo", "falloff", 40, 160], ["ro", "round", 0, 100],
+    ["st", "stretch", -60, 60], ["ti", "tilt", -90, 90], ["c", "centers", 1, 4], ["wa", "warp", 0, 100], ["gr", "grain", 0, 100],
+    ["p", "palette"], ["h", "hue", 0, 359], ["i", "invert"], ["m", "motion"], ["v", "speed", 4, 120], ["k", "strength", 0, 100],
+    ["t", "touch"], ["ts", "tstrength", 10, 100], ["tz", "tsize", 0, 100], ["gm", "gmode"], ["go", "gorder"], ["gd", "gdur", 3, 120],
+    ["fill", "exFill"], ["sur", "exSurround"], ["wan", "exWander"], ["cap", "exCaption"], ["q", "exquality"],
+  ];
+  function canvasQuery(s) {
+    const q = [["canvas", String(s.seed)]];
+    for (const [key, id] of CANVAS_KEYS) {
+      if (id === "hue" && s.palette !== "custom") continue;
+      const v = id === "motion" ? [...motionSet(s)].join(".") || "0" : s[id];
+      if (v === (id === "motion" ? "flow" : CANVAS_BASE[id])) continue;
+      q.push([key, typeof v === "boolean" ? (v ? "1" : "0") : String(v)]);
+    }
+    const n = Math.max(1, Math.min(4, s.centers)), seeded = seedWells(s.seed), ws = s.wells.slice(0, n);
+    if (ws.some((w, k) => Math.abs(w.x - seeded[k].x) > 0.0005 || Math.abs(w.y - seeded[k].y) > 0.0005)) {
+      q.push(["w", ws.map(w => `${+w.x.toFixed(4)},${+w.y.toFixed(4)}`).join(",")]);
+    }
+    return q.map(([k, v]) => k + "=" + encodeURIComponent(v).replace(/%2C/gi, ",")).join("&");
+  }
+  function applyCanvas(q) {
+    Object.assign(state, CANVAS_BASE);
+    const seed = parseInt(q.get("canvas"), 10);
+    state.seed = seed > 0 && seed < 2147483647 ? seed : DEFAULTS.seed;
+    for (const [key, id, lo, hi] of CANVAS_KEYS) {
+      if (!q.has(key)) continue;
+      const raw = q.get(key), base = CANVAS_BASE[id];
+      if (typeof base === "boolean") state[id] = raw === "1" || raw === "true";
+      else if (typeof base === "number") { const v = Math.round(+raw); if (Number.isFinite(v)) state[id] = lo == null ? v : Math.max(lo, Math.min(hi, v)); }
+      else if (id === "motion") state.motion = raw === "0" ? "" : raw.split(/[.,\s]+/).join(",");
+      else state[id] = raw;
+    }
+    state.wells = seedWells(state.seed);
+    const xy = (q.get("w") || "").split(",").map(Number);
+    for (let k = 0; k + 1 < xy.length && k < 8; k += 2) {
+      if (Number.isFinite(xy[k]) && Number.isFinite(xy[k + 1])) {
+        state.wells[k / 2].x = q4(Math.max(-1.3, Math.min(1.3, xy[k])));
+        state.wells[k / 2].y = q4(Math.max(-1.3, Math.min(1.3, xy[k + 1])));
+      }
+    }
+    state.exchange = 0;
+    sanitize();
+  }
+  const appBase = () => (/^https?:$/.test(location.protocol) && !inClaude && !/(^|\.)claude\.ai$/.test(location.hostname) ? location.origin + location.pathname : APP_URL);
+  const canvasLink = () => appBase() + "?" + canvasQuery(state);
+
   // ---------- boot ----------
   function start(data) {
-    loadSaved();
+    if (canvasMode) applyCanvas(canvasParams); else loadSaved();
     if (data && data.state) { Object.assign(state, data.state); sanitize(); }
     if (data && data.view) Object.assign(view, data.view);
     if (data && typeof data.time === "number") time = data.time;
@@ -5308,7 +5439,7 @@ void main() {
   });
   let deferred = null, mode = null;
   const show = (m, text) => { mode = m; label.textContent = text; btn.hidden = false; };
-  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; show("prompt", "Install Pixel Machine"); });
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); if (/[?&]canvas=/.test(location.search)) return; deferred = e; show("prompt", "Install Pixel Machine"); });
   btn.addEventListener("click", async () => {
     if (mode === "prompt" && deferred) {
       const ev = deferred;
@@ -5321,7 +5452,9 @@ void main() {
     showHelp();
   });
   window.addEventListener("appinstalled", () => { btn.hidden = true; });
-  if (!installed && location.protocol !== "file:") {
+  // A canvas link shows one work; installing from it would open the studio instead, so it isn't offered there.
+  const onCanvas = /[?&]canvas=/.test(location.search);
+  if (!installed && !onCanvas && location.protocol !== "file:") {
     if (isIOS || (inApp && isAndroid)) show("help", "Add to Home Screen");
     else if (macSafari) show("help", "Add to Dock");
     else if (isAndroid) setTimeout(() => { if (!mode) show("help", "Add to Home screen"); }, 3500);

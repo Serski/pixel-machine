@@ -274,6 +274,7 @@ html.exhibiting, html.exhibiting body { overflow: hidden; }
 
 .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.grid4 > .wide { grid-column: 1 / -1; }
 .chip {
   padding: 8px 4px;
   background: var(--chip);
@@ -996,7 +997,7 @@ kbd {
         <p class="note">Keys and pads send rings out from the core, bigger when you play harder. The mod wheel controls Strength until you map it.</p>
       </div>
       <p class="status" id="perf-status" aria-live="polite"></p>
-      <p class="keys">Keys: <kbd>1</kbd>–<kbd>8</kbd> switch movements, <kbd>[</kbd> <kbd>]</kbd> change the palette, <kbd>B</kbd> pulse, <kbd>N</kbd> new study, <kbd>Space</kbd> play or pause.</p>
+      <p class="keys">Keys: <kbd>1</kbd>–<kbd>9</kbd> switch movements, <kbd>[</kbd> <kbd>]</kbd> change the palette, <kbd>B</kbd> pulse, <kbd>N</kbd> new study, <kbd>Space</kbd> play or pause.</p>
     </section>
 
     <section class="sliders">
@@ -1062,7 +1063,24 @@ kbd {
         <label for="hue">Hue</label><output id="hue-out" for="hue">229°</output>
         <input type="range" id="hue" min="0" max="359" step="1" value="229">
       </div>
-      <div class="row">
+      <div class="group" id="sig-opts" hidden>
+        <div class="row">
+          <span>Pattern</span>
+          <div class="seg words" role="group" aria-label="Signal pattern" id="sig-pat">
+            <button type="button" id="sigpat-dots" data-v="dots">Dots</button>
+            <button type="button" id="sigpat-lines" data-v="lines">Lines</button>
+          </div>
+        </div>
+        <div class="row">
+          <span>Colors</span>
+          <div class="seg words" role="group" aria-label="Signal colors" id="sig-ink">
+            <button type="button" id="sigink-white" data-v="white">White on black</button>
+            <button type="button" id="sigink-black" data-v="black">Black on white</button>
+          </div>
+        </div>
+        <p class="note">Signal turns every tone into a pattern of pure black and white, like a data readout. The denser the pattern, the deeper the tone.</p>
+      </div>
+      <div class="row" id="invert-row">
         <span>Dark edges, light center</span>
         <button type="button" class="btn" id="invert" aria-pressed="false">Invert</button>
       </div>
@@ -1136,9 +1154,12 @@ kbd {
     { id: "violet", name: "Violet", hue: 300, chroma: 0.14 },
     { id: "ochre", name: "Ochre", hue: 78, chroma: 0.13 },
     { id: "custom", name: "Custom", custom: true, chroma: 0.12 },
+    { id: "signal", name: "Signal", signal: true },
   ];
   PALETTES.forEach(p => { if (p.stops) p.labs = p.stops.map(hexToLab); });
   function rampColor(pal, t, hue) {
+    // Signal: pure black and white; this is the average of each tone's pattern.
+    if (pal.signal) { const ink = state.sigink === "black" ? 0 : 255, v = Math.round((255 - ink) + (2 * ink - 255) * t); return [v, v, v]; }
     if (pal.labs) {
       const pos = t * (pal.labs.length - 1), i = Math.min(pal.labs.length - 2, Math.floor(pos)), f = pos - i;
       const A = pal.labs[i], B = pal.labs[i + 1];
@@ -1162,6 +1183,7 @@ kbd {
     { id: "swirl", name: "Swirl", desc: "Bands twist around each center." },
     { id: "wave", name: "Wave", desc: "A slow swell rolls across the surface." },
     { id: "shimmer", name: "Shimmer", desc: "Squares along the band edges flicker." },
+    { id: "pixelflow", name: "Pixel flow", desc: "The squares break loose, stream out from the core like pigment, and settle back into the grid." },
   ];
   const MOTION_IDS = new Set(MOTIONS.map(m => m.id));
   const REACTS = [
@@ -1217,7 +1239,7 @@ kbd {
   const FIELD_KEYS = ["grid", "format", "levels", "reach", "falloff", "round", "stretch", "tilt", "centers", "warp", "grain", "palette", "hue", "invert", "seed", "wells"];
   const DEFAULTS = {
     grid: 50, format: "1x1", levels: 12, reach: 100, falloff: 85, round: 50, stretch: 18, tilt: 0, centers: 1, warp: 30, grain: 35,
-    palette: "cerulean", hue: 229, invert: false, seed: 4821, wells: null,
+    palette: "cerulean", hue: 229, invert: false, seed: 4821, wells: null, sigpat: "dots", sigink: "white",
     motion: "flow", speed: 40, strength: 40, playing: !reduceMotion,
     touch: "ripple", tstrength: 60, tsize: 40, dragmode: coarse ? "play" : "move",
     exFill: true, exSurround: "black", exWander: true, exCaption: true,
@@ -1281,6 +1303,8 @@ kbd {
     if (!GRIDS.includes(state.grid)) state.grid = DEFAULTS.grid;
     if (!FORMATS.some(f => f.id === state.format)) state.format = "1x1";
     if (!PALETTES.some(p => p.id === state.palette)) state.palette = DEFAULTS.palette;
+    if (state.sigpat !== "dots" && state.sigpat !== "lines") state.sigpat = "dots";
+    if (state.sigink !== "white" && state.sigink !== "black") state.sigink = "white";
     state.centers = Math.max(1, Math.min(4, Math.round(state.centers)));
     state.levels = Math.max(2, Math.min(32, Math.round(state.levels)));
     state.motion = [...motionSet(state)].join(",");
@@ -1466,6 +1490,11 @@ kbd {
       deepen: au && mr.has("deepen") ? 0.1 * sens * au.env[1] : 0,
       beats, beatN,
       grow: opts.grow == null ? 2 : opts.grow, growOrder: GROW_CODES[s.gorder] || 1,
+      // Signal draws each square as a small pattern of dots, about 400 dots across the work.
+      sig: s.palette === "signal" ? (s.sigpat === "lines" ? 2 : 1) : 0,
+      sigN: Math.max(1, Math.min(16, 2 ** Math.round(Math.log2(400 / Math.max(dm.cols, dm.rows))))),
+      ink: s.sigink === "black" ? [0, 0, 0] : [1, 1, 1], paper: s.sigink === "black" ? [1, 1, 1] : [0, 0, 0],
+      pflow: ms.has("pixelflow") ? Math.max(0.08, k) : 0,
       t, wells,
     };
   }
@@ -1504,6 +1533,13 @@ kbd {
   }
 
   // ---------- WebGL renderer ----------
+  const SIG_GLSL = `// Signal: the threshold a tone's density must pass for this dot to be ink (dots or lines).
+float sigTh(ivec2 d, int mode) {
+  int x = d.x & 7, y = d.y & 7;
+  if (mode == 2) return (float(((y & 1) << 2) | (y & 2) | ((y & 4) >> 2)) + 0.5) / 8.0;
+  int xy = x ^ y;
+  return (float(((xy & 1) << 5) | ((x & 1) << 4) | ((xy & 2) << 2) | ((x & 2) << 1) | ((xy & 4) >> 1) | ((x & 4) >> 2)) + 0.5) / 64.0;
+}`;
   const VS = `#version 300 es
 void main() {
   vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
@@ -1542,9 +1578,16 @@ uniform int uGrowOrder;
 uniform vec3 uGround;
 uniform vec2 uOrigin, uPx;
 uniform float uResY, uFlip;
-uniform int uSS;
+uniform int uSS, uSig, uSigN, uOut;
+uniform vec3 uInk, uPaper;
 out vec4 outColor;
 const float NS = ${NS.toFixed(8)};
+${SIG_GLSL}
+vec3 sigColor(ivec2 c, vec2 a, int lv) {
+  float t = abs(uLut[lv].r - uPaper.r);
+  ivec2 d = c * uSigN + ivec2(clamp(floor(fract(a * uGridN) * float(uSigN)), 0.0, float(uSigN - 1)));
+  return t > sigTh(d, uSig) ? uInk : uPaper;
+}
 vec2 nz(vec2 p) { return texture(uNoise, p).rg; }
 vec2 fbm2(vec2 p) {
   vec2 s = nz(p);
@@ -1675,6 +1718,12 @@ void main() {
   vec2 pix = vec2(gl_FragCoord.x, uFlip > 0.5 ? gl_FragCoord.y : uResY - gl_FragCoord.y);
   ivec2 G = ivec2(uGridN + 0.5);
   vec3 tc = vec3(0.0);
+  if (uOut == 1) {
+    // Pixel flow reads each square's tone from here: one texel per square, 0 = not grown yet.
+    ivec2 c = clamp(ivec2(floor((uOrigin + pix * uPx) * uGridN)), ivec2(0), G - 1);
+    outColor = vec4(float(levelAt(c, tc) + 1) / 255.0, 0.0, 0.0, 1.0);
+    return;
+  }
   if (uSS > 1 && (uTouchN > 0 || uCamAmt > 0.0)) tc = interactAt(((uOrigin + pix * uPx) * 2.0 - 1.0) * uExt);
   vec3 col = vec3(0.0);
   for (int j = 0; j < 3; j++) {
@@ -1685,7 +1734,7 @@ void main() {
       vec2 a = uOrigin + (pix + sub) * uPx;
       ivec2 c = clamp(ivec2(floor(a * uGridN)), ivec2(0), G - 1);
       int lv = levelAt(c, tc);
-      col += lv < 0 ? uGround : uLut[lv];
+      col += lv < 0 ? uGround : (uSig > 0 ? sigColor(c, a, lv) : uLut[lv]);
     }
   }
   outColor = vec4(col / float(uSS * uSS), 1.0);
@@ -1723,7 +1772,7 @@ void main() {
     const names = ["uNoise", "uLut", "uGridN", "uExt", "uL", "uReach", "uGam", "uPe", "uNorm", "uScale", "uRot", "uWarp", "uGrain", "uShimmer",
       "uSeed", "uShimmerSeed", "uWells", "uNw", "uT", "uMorph", "uFlow", "uRipple", "uSwirl", "uWave",
       "uTouch", "uTouchN", "uTouchMode", "uTouchSize", "uOrigin", "uPx", "uResY", "uFlip", "uSS", "uDeepen", "uBeats", "uBeatN",
-      "uCam", "uCamAmt", "uCamMode", "uCamXf", "uCamTexel", "uGrow", "uGrowOrder", "uGround"];
+      "uCam", "uCamAmt", "uCamMode", "uCamXf", "uCamTexel", "uGrow", "uGrowOrder", "uGround", "uSig", "uSigN", "uOut", "uInk", "uPaper"];
     U = {};
     names.forEach(n => { U[n] = gl.getUniformLocation(prog, n); });
     quadVao = gl.createVertexArray();
@@ -1761,7 +1810,7 @@ void main() {
     const r = new Uint8Array(L), g = new Uint8Array(L), b = new Uint8Array(L), u32 = new Uint32Array(L);
     lutF = new Float32Array(96);
     for (let lv = 0; lv < L; lv++) {
-      const t = L === 1 ? 0 : (state.invert ? lv / (L - 1) : 1 - lv / (L - 1));
+      const t = L === 1 ? 0 : (state.invert && !pal.signal ? lv / (L - 1) : 1 - lv / (L - 1));
       const c = rampColor(pal, t, state.hue);
       r[lv] = c[0]; g[lv] = c[1]; b[lv] = c[2];
       u32[lv] = ((255 << 24) | (c[2] << 16) | (c[1] << 8) | c[0]) >>> 0;
@@ -1861,7 +1910,185 @@ void main() {
     gl.uniform1f(U.uResY, tgt.h);
     gl.uniform1f(U.uFlip, tgt.flip ? 1 : 0);
     gl.uniform1i(U.uSS, tgt.ss);
+    gl.uniform1i(U.uOut, tgt.levels ? 1 : 0);
+    gl.uniform1i(U.uSig, tgt.levels || tgt.plain ? 0 : P.sig || 0);
+    gl.uniform1i(U.uSigN, P.sigN || 1);
+    gl.uniform3fv(U.uInk, P.ink || [1, 1, 1]);
+    gl.uniform3fv(U.uPaper, P.paper || [0, 0, 0]);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  // ---------- Pixel flow: every square becomes a particle ----------
+  // A cycle holds the study still, lets the squares stream out (core first) and brings each one home.
+  const FLOW_T = 14, FLOW_HOLD = 0.36;
+  const flowPhase = t => { const f = (t / FLOW_T) % 1; return f < 0 ? f + 1 : f; };
+  const PF_VS = `#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+uniform sampler2D uLevels;
+uniform sampler2D uNoise;
+uniform vec2 uPGrid, uExt, uOrigin, uPx, uRes;
+uniform vec3 uWells[4];
+uniform int uNw, uL;
+uniform float uPhase, uHold, uAmt, uFlip, uNS;
+uniform uint uSeed;
+out vec2 vUv;
+flat out int vLv;
+flat out ivec2 vCell;
+const vec2 CORNER[6] = vec2[6](vec2(0.0, 0.0), vec2(1.0, 0.0), vec2(0.0, 1.0), vec2(0.0, 1.0), vec2(1.0, 0.0), vec2(1.0, 1.0));
+float rnd(uint i, uint s) {
+  uint h = (i * 0x9e3779b9u) ^ s;
+  h = (h ^ (h >> 16u)) * 0x7feb352du;
+  h = (h ^ (h >> 15u)) * 0x846ca68bu;
+  h ^= h >> 16u;
+  return float(h) * (1.0 / 4294967296.0);
+}
+void main() {
+  int pc = int(uPGrid.x + 0.5);
+  ivec2 cell = ivec2(gl_InstanceID % pc, gl_InstanceID / pc);
+  int code = int(texelFetch(uLevels, cell, 0).r * 255.0 + 0.5);
+  vec2 corner = CORNER[gl_VertexID];
+  vUv = corner;
+  vCell = cell;
+  vLv = max(code - 1, 0);
+  if (code == 0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  float lf = float(code - 1) / float(max(uL - 1, 1));
+  uint id = uint(gl_InstanceID);
+  float r1 = rnd(id, uSeed), r2 = rnd(id, uSeed ^ 0x51ed27u);
+  float u = clamp((uPhase - uHold) / (1.0 - uHold), 0.0, 1.0);
+  float ui = clamp((u - 0.25 * lf - 0.05 * r1) / 0.7, 0.0, 1.0);
+  float e = sin(3.14159265 * ui);
+  e *= e;
+  vec2 home = ((vec2(cell) + 0.5) / uPGrid * 2.0 - 1.0) * uExt;
+  vec2 c = vec2(0.0);
+  float best = 1e9, dir = 1.0;
+  for (int k = 0; k < 4; k++) {
+    if (k >= uNw) break;
+    float dk = distance(home, uWells[k].xy);
+    if (dk < best) { best = dk; c = uWells[k].xy; dir = (k & 1) == 0 ? 1.0 : -1.0; }
+  }
+  vec2 v = home - c;
+  float rho = length(v);
+  // The core turns fastest, so the bands twist into spiral arms; the dark squares spread outward
+  // like pigment, and every square loops through a slow current before it comes home.
+  float ang = dir * e * uAmt * 6.0 * exp(-rho * 1.3);
+  float cs = cos(ang), sn = sin(ang);
+  vec2 pos = c + vec2(v.x * cs - v.y * sn, v.x * sn + v.y * cs) * (1.0 + e * uAmt * 0.7 * (1.0 - lf) * (0.85 + 0.3 * r1));
+  vec2 n = textureLod(uNoise, home * uNS * 1.6 + vec2(0.37, 0.71), 0.0).rg;
+  float w = 6.2831853 * ui;
+  pos += e * uAmt * 0.45 * (cos(w) * n + sin(w) * vec2(-n.y, n.x));
+  pos += e * uAmt * 0.025 * (vec2(r1, r2) - 0.5);
+  // Each square shrinks and turns while it travels.
+  float ta = ang * 0.6, tcs = cos(ta), tsn = sin(ta);
+  vec2 q = (corner - 0.5) * (1.0 - 0.5 * e);
+  pos += vec2(q.x * tcs - q.y * tsn, q.x * tsn + q.y * tcs) * 2.0 * uExt / uPGrid;
+  vec2 tp = ((pos / uExt + 1.0) * 0.5 - uOrigin) / uPx;
+  float gy = uFlip > 0.5 ? tp.y : uRes.y - tp.y;
+  gl_Position = vec4(tp.x / uRes.x * 2.0 - 1.0, gy / uRes.y * 2.0 - 1.0, lf * 0.9 - 0.45 - e * 0.05, 1.0);
+}`;
+  const PF_FS = `#version 300 es
+precision highp float;
+precision highp int;
+uniform vec3 uLut[32], uInk, uPaper;
+uniform int uSig, uSigN;
+in vec2 vUv;
+flat in int vLv;
+flat in ivec2 vCell;
+out vec4 o;
+${SIG_GLSL}
+void main() {
+  vec3 col = uLut[vLv];
+  if (uSig > 0) {
+    float t = abs(col.r - uPaper.r);
+    ivec2 d = vCell * uSigN + ivec2(clamp(floor(vUv * float(uSigN)), 0.0, float(uSigN - 1)));
+    if (t <= sigTh(d, uSig)) discard;
+    col = uInk;
+  }
+  o = vec4(col, 1.0);
+}`;
+  let flowGL = null;
+  function ensureFlowGL() {
+    if (flowGL) return true;
+    const pr = spProgram(PF_VS, PF_FS);
+    if (!pr) return false;
+    const F = { prog: pr, U: {}, vao: gl.createVertexArray(), tex: null, fb: null, w: 0, h: 0 };
+    ["uLevels", "uNoise", "uPGrid", "uExt", "uOrigin", "uPx", "uRes", "uWells", "uNw", "uL", "uPhase", "uHold", "uAmt", "uFlip", "uNS", "uSeed",
+      "uLut", "uInk", "uPaper", "uSig", "uSigN"].forEach(n => { F.U[n] = gl.getUniformLocation(pr, n); });
+    flowGL = F;
+    return true;
+  }
+  // Up to a million particles (300,000 on phones); bigger grids flow in small groups of squares.
+  function flowGrid(P) {
+    const cap = coarse ? 300000 : 1000000, n = P.cols * P.rows;
+    if (n <= cap) return [P.cols, P.rows];
+    const f = Math.sqrt(cap / n);
+    return [Math.max(1, Math.round(P.cols * f)), Math.max(1, Math.round(P.rows * f))];
+  }
+  function drawFlow(P, tgt, phase) {
+    if (!ensureFlowGL()) { drawGL(P, tgt); return; }
+    const F = flowGL, [pc, pr] = flowGrid(P);
+    if (F.w !== pc || F.h !== pr) {
+      if (F.fb) { gl.deleteFramebuffer(F.fb); gl.deleteTexture(F.tex); }
+      F.tex = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE5);
+      gl.bindTexture(gl.TEXTURE_2D, F.tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, pc, pr, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      F.fb = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, F.fb);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, F.tex, 0);
+      gl.activeTexture(gl.TEXTURE0);
+      F.w = pc; F.h = pr;
+    }
+    drawGL(P, { fb: F.fb, w: pc, h: pr, origin: [0, 0], px: [1 / pc, 1 / pr], ss: 1, flip: true, levels: true, touch: tgt.touch, touchNow: tgt.touchNow, lut: tgt.lut });
+    gl.bindFramebuffer(gl.FRAMEBUFFER, tgt.fb || null);
+    gl.viewport(0, 0, tgt.w, tgt.h);
+    const lf = tgt.lut || lutF, gi = (P.L - 1) * 3;
+    gl.clearColor(lf[gi], lf[gi + 1], lf[gi + 2], 1);
+    gl.clearDepth(1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
+    gl.useProgram(F.prog);
+    const V = F.U;
+    gl.activeTexture(gl.TEXTURE5);
+    gl.bindTexture(gl.TEXTURE_2D, F.tex);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(V.uLevels, 5);
+    gl.uniform1i(V.uNoise, 0);
+    gl.uniform2f(V.uPGrid, pc, pr);
+    gl.uniform2f(V.uExt, P.ex, P.ey);
+    gl.uniform2f(V.uOrigin, tgt.origin[0], tgt.origin[1]);
+    gl.uniform2f(V.uPx, tgt.px[0], tgt.px[1]);
+    gl.uniform2f(V.uRes, tgt.w, tgt.h);
+    const wv = new Float32Array(12);
+    for (let i = 0; i < P.wells.length; i++) wv[i] = P.wells[i];
+    gl.uniform3fv(V.uWells, wv);
+    gl.uniform1i(V.uNw, P.wells.length / 3);
+    gl.uniform1i(V.uL, P.L);
+    gl.uniform1f(V.uPhase, phase);
+    gl.uniform1f(V.uHold, FLOW_HOLD);
+    gl.uniform1f(V.uAmt, P.pflow);
+    gl.uniform1f(V.uFlip, tgt.flip ? 1 : 0);
+    gl.uniform1f(V.uNS, NS);
+    gl.uniform1ui(V.uSeed, P.seed);
+    gl.uniform3fv(V.uLut, lf);
+    gl.uniform1i(V.uSig, P.sig || 0);
+    gl.uniform1i(V.uSigN, P.sigN || 1);
+    gl.uniform3fv(V.uInk, P.ink);
+    gl.uniform3fv(V.uPaper, P.paper);
+    gl.bindVertexArray(F.vao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, pc * pr);
+    gl.disable(gl.DEPTH_TEST);
+    gl.bindVertexArray(quadVao);
+  }
+  // Draws the flat work: as particles while Pixel flow is mid-stream, otherwise as the field.
+  function drawWork(P, tgt) {
+    if (P.pflow > 0) { const ph = flowPhase(P.t); if (ph > FLOW_HOLD) { drawFlow(P, tgt, ph); return; } }
+    drawGL(P, tgt);
   }
   function ensureFbo(w, h) {
     if (fbo && fboW === w && fboH === h) return;
@@ -1971,7 +2198,7 @@ void main() {
       const cpp = P.cols * px[0];
       let ss = cpp > 1.25 ? Math.min(3, Math.ceil(cpp)) : 1;
       if (isMoving() && ss > 2) ss = 2;
-      drawGL(P, { w: Dw, h: Dh, origin: [view.x - span / 2, view.y - span / 2], px, ss, touch: true });
+      drawWork(P, { w: Dw, h: Dh, origin: [view.x - span / 2, view.y - span / 2], px, ss, touch: true });
     } else if (ctx2d) {
       cpuRender();
     }
@@ -2032,7 +2259,7 @@ void main() {
     const palName = pal.custom ? `hue ${state.hue}°` : pal.name;
     const names = ms.map(id => MOTIONS.find(m => m.id === id).name.toLowerCase());
     const medium = names.length ? `Square pixels in motion (${names.join(", ")})` : "Square pixels";
-    $("l-medium").textContent = `${medium}, ${palName}${state.invert ? " inverted" : ""}, ${state.levels} tones`;
+    $("l-medium").textContent = `${medium}, ${palName}${state.invert && state.palette !== "signal" ? " inverted" : ""}, ${state.levels} tones`;
     $("l-dims").textContent = `${f.id === "1x1" ? "" : f.name + " " + f.r + " · "}${fmt(dm.cols)} × ${fmt(dm.rows)} squares · ${fmt(dm.cols * dm.rows)} in all`;
     art.setAttribute("aria-label", `${ARTIST}, Study No. ${state.seed}: ${dm.cols} by ${dm.rows} grid of squares in ${state.levels} tones of ${palName}, stepping from light edges to a dark center${names.length ? ", moving with " + names.join(", ") : ""}.`);
     const s = exportScale(dm), Ew = s * dm.cols, Eh = s * dm.rows;
@@ -2045,7 +2272,7 @@ void main() {
     if (!gl && ctx2d) renderEl.textContent = state.grid > 600 ? "Basic mode: grids above 600 show at 600 here. Saved PNGs use the full grid." : "";
     if (space.active && space.geom) {
       const bs = space.geom.bounds.size;
-      $("l-medium").textContent = `Square pixels in space, ${state.spmode === "fill" ? "filling the air of" : "covering"} ${space.name}, ${palName}${state.invert ? " inverted" : ""}, ${state.levels} tones`;
+      $("l-medium").textContent = `Square pixels in space, ${state.spmode === "fill" ? "filling the air of" : "covering"} ${space.name}, ${palName}${state.invert && state.palette !== "signal" ? " inverted" : ""}, ${state.levels} tones`;
       $("l-dims").textContent = `${fmt(space.count)} pixels · ${Math.round(space.size * 100)} cm each · ${bs[0].toFixed(1)} × ${bs[1].toFixed(1)} × ${bs[2].toFixed(1)} m`;
       $("save-note").textContent = "Saves the current view as a PNG, up to 3,000 px wide.";
     }
@@ -2188,7 +2415,7 @@ void main() {
   MOTIONS.forEach(m => {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "chip word";
+    b.className = m.id === "pixelflow" ? "chip word wide" : "chip word";
     b.id = "motion-" + m.id;
     b.dataset.id = m.id;
     b.textContent = m.name;
@@ -2224,10 +2451,33 @@ void main() {
     $("grids").append(b);
   });
 
+  // An 8 × 8 dot pattern of the given density, for the Signal swatch.
+  function ditherTile(t) {
+    const c = document.createElement("canvas");
+    c.width = c.height = 8;
+    const x2 = c.getContext("2d"), im = x2.createImageData(8, 8), ink = state.sigink === "black" ? 0 : 255;
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+      const xy = x ^ y, th = ((((xy & 1) << 5) | ((x & 1) << 4) | ((xy & 2) << 2) | ((x & 2) << 1) | ((xy & 4) >> 1) | ((x & 4) >> 2)) + 0.5) / 64;
+      const v = t > th ? ink : 255 - ink, o = (y * 8 + x) * 4;
+      im.data[o] = im.data[o + 1] = im.data[o + 2] = v; im.data[o + 3] = 255;
+    }
+    x2.putImageData(im, 0, 0);
+    return c.toDataURL();
+  }
   function paintSwatches() {
     PALETTES.forEach(pal => {
       const sw = document.querySelector(`#palette-${pal.id} .swatch`);
       sw.innerHTML = "";
+      if (pal.signal) {
+        for (let i = 0; i < 6; i++) {
+          const st = document.createElement("span");
+          st.style.backgroundImage = `url(${ditherTile(i / 5)})`;
+          st.style.backgroundSize = "6px 6px";
+          st.style.imageRendering = "pixelated";
+          sw.append(st);
+        }
+        return;
+      }
       for (let i = 0; i < 6; i++) {
         const st = document.createElement("span");
         st.style.background = rgbCss(rampColor(pal, i / 5, state.hue));
@@ -2238,7 +2488,7 @@ void main() {
   PALETTES.forEach(pal => {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "tile";
+    b.className = pal.signal ? "tile wide" : "tile";
     b.id = "palette-" + pal.id;
     const sw = document.createElement("span");
     sw.className = "swatch";
@@ -2250,6 +2500,8 @@ void main() {
     b.addEventListener("click", () => { state.palette = pal.id; colorChanged(); changed(); });
     $("palettes").append(b);
   });
+  document.querySelectorAll("#sig-pat button").forEach(b => b.addEventListener("click", () => { state.sigpat = b.dataset.v; changed(); }));
+  document.querySelectorAll("#sig-ink button").forEach(b => b.addEventListener("click", () => { state.sigink = b.dataset.v; colorChanged(true); paintSwatches(); changed(); }));
   function colorChanged(skipSwatches) {
     buildLUT();
     if (!skipSwatches && state.palette === "custom") paintSwatches();
@@ -2271,6 +2523,10 @@ void main() {
     $("grain-out").textContent = state.grain + "%";
     $("hue-out").textContent = state.hue + "°";
     $("hue-row").hidden = state.palette !== "custom";
+    $("sig-opts").hidden = state.palette !== "signal";
+    $("invert-row").hidden = state.palette === "signal";
+    document.querySelectorAll("#sig-pat button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === state.sigpat)));
+    document.querySelectorAll("#sig-ink button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === state.sigink)));
     document.querySelectorAll("#formats .tile").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.id === state.format)));
     document.querySelectorAll("#grids .chip").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.n === state.grid)));
     document.querySelectorAll("#palettes .tile").forEach(b => b.setAttribute("aria-pressed", String(b.id === "palette-" + state.palette)));
@@ -2454,7 +2710,7 @@ void main() {
       else if (e.key === "m" || e.key === "M") { e.preventDefault(); toggleMusic(); }
     });
     art.addEventListener("webglcontextlost", e => { e.preventDefault(); glLost = true; });
-    art.addEventListener("webglcontextrestored", () => { glLost = false; setupGL(); space.gl = null; space.dirty = true; needsDraw = true; });
+    art.addEventListener("webglcontextrestored", () => { glLost = false; setupGL(); space.gl = null; space.dirty = true; flowGL = null; needsDraw = true; });
   }
 
   // ---------- exhibition ----------
@@ -2587,7 +2843,7 @@ void main() {
       for (let ty = 0; ty < ny; ty++) {
         for (let tx = 0; tx < nx; tx++) {
           const w = Math.min(T, Ew - tx * T), h = Math.min(T, Eh - ty * T);
-          drawGL(P, { fb: fbo, w, h, origin: [tx * T / Ew, ty * T / Eh], px: [1 / Ew, 1 / Eh], ss: 1, touch: true, touchNow: now });
+          drawWork(P, { fb: fbo, w, h, origin: [tx * T / Ew, ty * T / Eh], px: [1 / Ew, 1 / Eh], ss: 1, touch: true, touchNow: now });
           gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, tmp);
           for (let r = 0; r < h; r++) {
             const src = (h - 1 - r) * w, dst = (ty * T + r) * Ew + tx * T;
@@ -2809,7 +3065,7 @@ void main() {
         const grow = snap.gmode === "off" ? 2 : growAt(i / fps, snap.gmode, snap.gdur);
         const FP = fieldParams(snap, tt, true, { dims: dm, audio, grow });
         const tgt = { fb: fbo, w: W, h: H, origin: [0, 0], px: [1 / W, 1 / H], ss, flip: true, lut: lutSnap, turn: i / fps, snap };
-        if (space.active) drawSpace(FP, tgt); else drawGL(FP, tgt);
+        if (space.active) drawSpace(FP, tgt); else drawWork(FP, tgt);
         gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
         const ts = Math.round(i * 1e6 / fps), next = Math.round((i + 1) * 1e6 / fps);
         const vf = new VideoFrame(pixels, { format: "RGBA", codedWidth: W, codedHeight: H, timestamp: ts, duration: next - ts });
@@ -3543,7 +3799,7 @@ void main() {
     const t = e.target, tag = t && t.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
     if (e.metaKey || e.ctrlKey || e.altKey || !gl) return;
-    if (/^[1-8]$/.test(e.key)) { e.preventDefault(); toggleMotion(MOTIONS[+e.key - 1].id); }
+    if (/^[1-9]$/.test(e.key)) { e.preventDefault(); toggleMotion(MOTIONS[+e.key - 1].id); }
     else if (e.key === "[" || e.key === "]") { e.preventDefault(); cyclePalette(e.key === "]" ? 1 : -1); }
     else if (e.key === "b" || e.key === "B") { e.preventDefault(); firePulse(1); }
   });
@@ -3846,6 +4102,10 @@ void main() {
     $("pr-vector-note").textContent = vec
       ? "PDF and SVG draw every square as a shape, sharp at any size, with each tone on its own layer for printers and plotters."
       : "PDF and SVG files are available up to 500 × 500 squares. For bigger grids, use the print PNG.";
+    if (state.palette === "signal" && !space.active) {
+      $("pr-pdf").disabled = $("pr-svg").disabled = true;
+      $("pr-vector-note").textContent = "Signal prints as a PNG: at 300 dpi its dots and lines stay perfectly sharp. PDF and SVG are for the color palettes.";
+    }
     if (space.active) {
       $("pr-png").disabled = $("pr-pdf").disabled = $("pr-svg").disabled = true;
       $("pr-vector-note").textContent = "Prints use the flat study. Go back to it in the Space section to print.";
@@ -3894,7 +4154,7 @@ void main() {
     const dm = dimsOf(state), C = dm.cols, R = dm.rows;
     const P = fieldParams(state, time, true, { dims: dm, audio: liveAudio(), pulses: livePulses() });
     ensureFbo(C, R);
-    drawGL(P, { fb: fbo, w: C, h: R, origin: [0, 0], px: [1 / C, 1 / R], ss: 1, flip: true, touch: true });
+    drawGL(P, { fb: fbo, w: C, h: R, origin: [0, 0], px: [1 / C, 1 / R], ss: 1, flip: true, touch: true, plain: true });
     const buf = new Uint8Array(C * R * 4);
     gl.readPixels(0, 0, C, R, gl.RGBA, gl.UNSIGNED_BYTE, buf);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -4679,6 +4939,8 @@ uniform float uR, uGam, uWarp, uNoiseF, uRipple, uT, uDeepen, uGrain, uShimmer, 
 uniform vec2 uBeats[6];
 uniform vec2 uYRange;
 uniform uint uShimmerSeed;
+uniform int uSig;
+uniform float uSigInv;
 out vec4 o;
 ${SP_NOISE}
 void main() {
@@ -4716,6 +4978,12 @@ void main() {
     float h2 = float(h3(ivec3(i, 1, 2), 77u)) / 4294967296.0;
     float dens = uDensity * pow(1.0 - float(lv) / float(max(uL - 1, 1)), 1.5);
     vis = (lv < uL - 1 && h2 < dens) ? 1.0 : 0.0;
+  }
+  if (uSig > 0) {
+    // Signal: each pixel is ink or empty, as often as its tone is deep.
+    float t = float(lv) / float(max(uL - 1, 1));
+    if (uSigInv < 0.5) t = 1.0 - t;
+    if (float(h3(ivec3(i, 4, 8), 91u)) / 4294967296.0 >= t) vis = 0.0;
   }
   o = vec4(float(lv) / 255.0, vis, 0.0, 1.0);
 }`;
@@ -4807,7 +5075,7 @@ void main() {
       const loc = (pr, names) => { const o = {}; names.forEach(n => { o[n] = gl.getUniformLocation(pr, n); }); return o; };
       const G = {
         field, cube, scan,
-        Uf: loc(field, ["uPos", "uCount", "uL", "uBeatN", "uGrowOrder", "uMode", "uCore", "uOff1", "uOff2", "uR", "uGam", "uWarp", "uNoiseF", "uRipple", "uT", "uDeepen", "uGrain", "uShimmer", "uGrow", "uCutY", "uDensity", "uBeats", "uYRange", "uShimmerSeed"]),
+        Uf: loc(field, ["uPos", "uCount", "uL", "uBeatN", "uGrowOrder", "uMode", "uCore", "uOff1", "uOff2", "uR", "uGam", "uWarp", "uNoiseF", "uRipple", "uT", "uDeepen", "uGrain", "uShimmer", "uGrow", "uCutY", "uDensity", "uBeats", "uYRange", "uShimmerSeed", "uSig", "uSigInv"]),
         Uc: loc(cube, ["uPos", "uField", "uVP", "uSize", "uLut", "uEye", "uClear"]),
         Us: loc(scan, ["uVP", "uCol", "uCutY", "uEye", "uLo", "uHi", "uOpen"]),
         posTex: gl.createTexture(), fieldTex: gl.createTexture(), fieldFbo: gl.createFramebuffer(),
@@ -4901,6 +5169,8 @@ void main() {
     gl.uniform1f(U.uCutY, spaceCutY(s));
     gl.uniform1i(U.uMode, s.spmode === "fill" ? 2 : 1);
     gl.uniform1f(U.uDensity, s.spdens / 100);
+    gl.uniform1i(U.uSig, P.sig ? 1 : 0);
+    gl.uniform1f(U.uSigInv, 0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
   function spaceVP(aspect, s, turn, flip) {
@@ -4930,7 +5200,9 @@ void main() {
     spaceFieldPass(P, s);
     gl.bindFramebuffer(gl.FRAMEBUFFER, tgt.fb || null);
     gl.viewport(0, 0, tgt.w, tgt.h);
-    gl.clearColor(0.047, 0.055, 0.067, 1);
+    const sig = P.sig > 0;
+    if (sig) gl.clearColor(P.paper[0], P.paper[1], P.paper[2], 1);
+    else gl.clearColor(0.047, 0.055, 0.067, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
     const cam = spaceVP(tgt.w / tgt.h, s, tgt.turn, tgt.flip), VP = cam.vp;
@@ -4940,7 +5212,8 @@ void main() {
     gl.uniform1f(G.Uc.uSize, space.size);
     gl.uniform3f(G.Uc.uEye, cam.eye[0], cam.eye[1], cam.eye[2]);
     gl.uniform1f(G.Uc.uClear, s.spview === "inside" ? Math.max(s.spmode === "fill" ? 0.55 : 0.25, space.size * 4) : 0);
-    gl.uniform3fv(G.Uc.uLut, tgt.lut || lutF);
+    if (sig) { const inkLut = new Float32Array(96); for (let i = 0; i < 32; i++) inkLut.set(P.ink, i * 3); gl.uniform3fv(G.Uc.uLut, inkLut); }
+    else gl.uniform3fv(G.Uc.uLut, tgt.lut || lutF);
     gl.activeTexture(gl.TEXTURE3);
     gl.bindTexture(gl.TEXTURE_2D, G.posTex);
     gl.activeTexture(gl.TEXTURE4);
@@ -4958,7 +5231,8 @@ void main() {
       const inn = space.geom.inner, open = s.spmode === "fill" && s.spview !== "inside";
       gl.useProgram(G.scan);
       gl.uniformMatrix4fv(G.Us.uVP, false, VP);
-      gl.uniform3f(G.Us.uCol, 0.3, 0.33, 0.37);
+      if (sig) gl.uniform3f(G.Us.uCol, P.paper[0] * 0.84 + P.ink[0] * 0.16, P.paper[1] * 0.84 + P.ink[1] * 0.16, P.paper[2] * 0.84 + P.ink[2] * 0.16);
+      else gl.uniform3f(G.Us.uCol, 0.3, 0.33, 0.37);
       gl.uniform1f(G.Us.uCutY, spaceCutY(s));
       gl.uniform3f(G.Us.uEye, cam.eye[0], cam.eye[1], cam.eye[2]);
       gl.uniform3f(G.Us.uLo, inn.min[0], inn.min[1], inn.min[2]);
@@ -5015,7 +5289,7 @@ void main() {
   }
 
   // ----- AR: USDZ for AR Quick Look on iPhone and iPad -----
-  function buildUSDA(groups) {
+  function buildUSDA(groups, ink) {
     const b = space.geom.bounds, cx = b.min[0] + b.size[0] / 2, cz = b.min[2] + b.size[2] / 2, h = space.size * 0.47;
     // The lowest pixels stand on the floor of the real room.
     let y0 = Infinity;
@@ -5031,7 +5305,7 @@ void main() {
       out.push(`        def Material "Tone${lv}"`, "        {",
         `            token outputs:surface.connect = </PixelMachine/Materials/Tone${lv}/Surface.outputs:surface>`,
         '            def Shader "Surface"', "            {", '                uniform token info:id = "UsdPreviewSurface"',
-        `                color3f inputs:diffuseColor = (${f(lin(lut.r[lv]))}, ${f(lin(lut.g[lv]))}, ${f(lin(lut.b[lv]))})`,
+        `                color3f inputs:diffuseColor = (${ink ? ink.map(v => f(lin(v * 255))).join(", ") : `${f(lin(lut.r[lv]))}, ${f(lin(lut.g[lv]))}, ${f(lin(lut.b[lv]))}`})`,
         "                float inputs:roughness = 0.85", "                float inputs:metallic = 0", "                token outputs:surface", "            }", "        }");
     }
     out.push("    }");
@@ -5110,7 +5384,7 @@ void main() {
       }
       if (!total) throw new Error("No pixels are showing right now, so there's nothing to place in AR.");
       if (total > SP_CAP.ar) throw new Error(`${fmt(total)} pixels is too many for AR. Choose a bigger pixel size, or lower the density.`);
-      const blob = makeUsdz([{ name: "pixel-machine.usda", data: new TextEncoder().encode(buildUSDA(groups)) }]);
+      const blob = makeUsdz([{ name: "pixel-machine.usda", data: new TextEncoder().encode(buildUSDA(groups, P.sig ? P.ink : null)) }]);
       if (ar && arSupported && !inClaude) { openQuickLook(blob); spStatus(`Opening AR with ${fmt(total)} pixels…`); }
       else {
         spStatus("Confirm the save in the prompt.");
@@ -5187,6 +5461,7 @@ void main() {
     grid: 50, format: "1x1", levels: 12, reach: 100, falloff: 85, round: 50, stretch: 18, tilt: 0, centers: 1, warp: 30, grain: 35,
     palette: "cerulean", hue: 229, invert: false, motion: "flow", speed: 40, strength: 40, touch: "ripple", tstrength: 60, tsize: 40,
     gmode: "off", gorder: "core", gdur: 20, exFill: true, exSurround: "black", exWander: true, exCaption: true, exquality: "full",
+    sigpat: "dots", sigink: "white",
   };
   // Key in the link, setting, and the allowed range for numbers.
   const CANVAS_KEYS = [
@@ -5195,6 +5470,7 @@ void main() {
     ["p", "palette"], ["h", "hue", 0, 359], ["i", "invert"], ["m", "motion"], ["v", "speed", 4, 120], ["k", "strength", 0, 100],
     ["t", "touch"], ["ts", "tstrength", 10, 100], ["tz", "tsize", 0, 100], ["gm", "gmode"], ["go", "gorder"], ["gd", "gdur", 3, 120],
     ["fill", "exFill"], ["sur", "exSurround"], ["wan", "exWander"], ["cap", "exCaption"], ["q", "exquality"],
+    ["sg", "sigpat"], ["si", "sigink"],
   ];
   function canvasQuery(s) {
     const q = [["canvas", String(s.seed)]];

@@ -27,7 +27,9 @@ Once installed it opens in its own window and works offline.
 
 - Grids from 20 to 5000 squares along the long side, in square, portrait, story, wide, panorama and banner formats
 - Palettes sampled from the original studies, plus custom hues
+- Signal: pure black and white, with every tone drawn as a pattern of dots or lines, white on black or black on white
 - Movement: flow, morph, drift, breathe, ripple, swirl, wave and shimmer, in any combination
+- Pixel flow: the squares break loose as particles, swirl out from the core in spiral arms like pigment, and settle back into the grid
 - Music: load a song and the work pulses, sends rings out on the beat, surges and sparkles with it
 - Touch and mouse play: ripple, swirl, push and ink
 - Exhibition mode: full screen, controls hidden, the screen kept awake

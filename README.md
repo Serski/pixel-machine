@@ -41,6 +41,9 @@ Once installed it opens in its own window and works offline.
 - Camera: visitors' movement darkens, lightens, pushes or ripples the field
 - Listen to the room: the microphone hears voices, clapping or a live band
 - Live performance: MIDI knobs (map any slider), keys and pads fire rings, keyboard shortcuts, and an output window for a projector or second screen
+- Cues: save up to eight looks (the study, its shape, palette and tones, movement and music reactions) and call them back with a click, Shift + 1–8 or a MIDI pad
+- Crossfade: the new look takes over square by square, never with blended colors: growing from its dark core, scattered, or row by row, over 1 to 16 seconds or beats. Cues, new variations, palettes, presets and the exhibition's changes all use it. With Grow once on, a new study grows over the old one
+- Tap tempo: tap T, the Tap button or a MIDI pad. Rings go out on each beat or bar, cues and new studies can land on the next beat or bar, and crossfades count beats
 
 Camera and microphone are processed on the device. Nothing is recorded, saved or sent.
 
@@ -94,7 +97,11 @@ The scan never leaves the device. If a scan lies on its side, switch **Up direct
 1. Open the app on your laptop and press **Open output window** in Live performance.
 2. Drag the new window to the projector or second screen, click it, and press **F** for full screen.
 3. Keep playing from the laptop: everything you change appears on the output.
-4. To use a MIDI controller (Chrome or Edge), press **Connect**, turn on **Map knobs**, click a slider and turn a knob. Keys and pads send rings out from the core.
+4. To use a MIDI controller (Chrome or Edge), press **Connect**, turn on **Map knobs and pads**, click a slider and turn a knob. Keys and pads send rings out from the core.
+5. **Cues:** set up a look and click an empty cue to save it. Click a saved cue, or press Shift + 1–8, to bring it back. To replace a cue, turn on **Save to a cue** and click it.
+6. **Crossfade:** pick a length (Cut for none) and an order: from the core, scattered, or row by row.
+7. **Tempo:** tap **Tap** or press **T** at least four times on the beat. Beat one is your first tap; one tap later moves it. Choose whether rings go out on each beat or bar, and whether changes land now, on the next beat or on the next bar.
+8. To play cues and the tempo from pads, turn on **Map knobs and pads**, click a cue or **Tap**, then hit a pad.
 
 ## Updating the app
 

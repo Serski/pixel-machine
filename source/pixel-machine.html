@@ -454,7 +454,42 @@ kbd {
 .maps li { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--chip); padding: 4px 4px 4px 8px; border-radius: 2px; }
 .maps li span { font-family: var(--f-mono); font-size: 11.5px; }
 .maps button { border: 0; background: transparent; color: var(--accent); cursor: pointer; font-size: 12px; text-decoration: underline; text-underline-offset: 2px; }
-.ctrl.learning { outline: 2px dashed var(--accent); outline-offset: 4px; }
+.ctrl.learning, .cue.learning, .btn.learning { outline: 2px dashed var(--accent); outline-offset: 4px; }
+.group > .linkish { justify-self: start; }
+.cues { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.cue {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 8px 4px 6px;
+  background: var(--chip);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 11.5px;
+  min-width: 0;
+}
+.cue:hover { border-color: var(--line); }
+.cue canvas { display: block; width: 40px; height: 40px; image-rendering: pixelated; }
+.cue-n { position: absolute; top: 3px; left: 5px; font-family: var(--f-mono); font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.cue-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cue.empty canvas { outline: 1px dashed var(--line); outline-offset: -1px; }
+.cue.empty .cue-name { color: var(--muted); }
+.cue[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); color: var(--accent); font-weight: 650; }
+.cue[aria-pressed="true"] .cue-n { color: var(--accent); }
+.cues.storing .cue { border-style: dashed; border-color: var(--muted); }
+.cue.queued { animation: cue-wait .6s steps(1) infinite; }
+@keyframes cue-wait { 50% { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); } }
+.tempo { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+.tap { min-width: 92px; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+.tap.hit { filter: brightness(1.3); }
+.bpm { display: grid; gap: 6px; min-width: 0; }
+.bpm output { font-family: var(--f-mono); font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.beats { display: flex; gap: 6px; }
+.beats i { width: 10px; height: 10px; background: var(--line); }
+.beats i.on { background: var(--accent); }
+.beats i.on:first-child { background: var(--ink); }
 .cam-row { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 12px; align-items: center; }
 .cam-row canvas { width: 128px; height: 96px; image-rendering: pixelated; background: var(--ink); border-radius: 2px; }
 .pbtns { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
@@ -500,7 +535,7 @@ kbd {
   }
   .brand h1 { font-size: 32px; }
 }
-@media (prefers-reduced-motion: reduce) { .ex-exit { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ex-exit { transition: none; } .cue.queued { animation: none; border-color: var(--accent); } }
 </style>
 
 <div class="app" id="app">
@@ -570,6 +605,7 @@ kbd {
       <button type="button" data-to="sec-canvas">Canvas</button>
       <button type="button" data-to="sec-tv">TV</button>
       <button type="button" data-to="perform">Live</button>
+      <button type="button" data-to="cues">Cues</button>
       <button type="button" data-to="sec-color">Color</button>
     </nav>
 
@@ -990,14 +1026,79 @@ kbd {
       </div>
       <div class="group" id="midi-area" hidden>
         <div class="row">
-          <span>Map knobs <small>click a slider, then turn a knob</small></span>
+          <span>Map knobs and pads <small>pick a slider, a cue or Tap, then use the controller</small></span>
           <button type="button" class="btn toggle" id="midi-learn" aria-pressed="false">Off</button>
         </div>
         <ul class="maps" id="midi-maps" hidden></ul>
-        <p class="note">Keys and pads send rings out from the core, bigger when you play harder. The mod wheel controls Strength until you map it.</p>
+        <p class="note">Keys and pads send rings out from the core, bigger when you play harder, unless you map them to a cue or to Tap. The mod wheel controls Strength until you map it.</p>
       </div>
       <p class="status" id="perf-status" aria-live="polite"></p>
-      <p class="keys">Keys: <kbd>1</kbd>–<kbd>9</kbd> switch movements, <kbd>[</kbd> <kbd>]</kbd> change the palette, <kbd>B</kbd> pulse, <kbd>N</kbd> new study, <kbd>Space</kbd> play or pause.</p>
+      <p class="keys">Keys: <kbd>1</kbd>–<kbd>9</kbd> switch movements, <kbd>Shift</kbd> + <kbd>1</kbd>–<kbd>8</kbd> call cues, <kbd>[</kbd> <kbd>]</kbd> change the palette, <kbd>T</kbd> taps the tempo, <kbd>B</kbd> pulse, <kbd>N</kbd> new study, <kbd>Space</kbd> play or pause.</p>
+    </section>
+
+    <section class="group" id="cues">
+      <h2>Cues <small>save a look, call it back live</small></h2>
+      <div class="cues" id="cue-grid"></div>
+      <p class="note" id="cue-note"></p>
+      <div class="row">
+        <span>Save to a cue <small>replaces what's there</small></span>
+        <button type="button" class="btn toggle" id="cue-store" aria-pressed="false">Off</button>
+      </div>
+      <button type="button" class="linkish" id="cue-clear" hidden>Clear all cues</button>
+      <p class="status" id="cue-status" aria-live="polite"></p>
+    </section>
+
+    <section class="group" id="fade">
+      <h2>Crossfade <small>how one look becomes the next</small></h2>
+      <div class="vopt">
+        <span id="fade-len-label">Length <small class="note" id="fade-unit">seconds</small></span>
+        <div class="seg full" role="group" aria-labelledby="fade-len-label" id="fade-len">
+          <button type="button" id="fadelen-0" data-v="0">Cut</button>
+          <button type="button" id="fadelen-1" data-v="1">1</button>
+          <button type="button" id="fadelen-2" data-v="2">2</button>
+          <button type="button" id="fadelen-4" data-v="4">4</button>
+          <button type="button" id="fadelen-8" data-v="8">8</button>
+          <button type="button" id="fadelen-16" data-v="16">16</button>
+        </div>
+      </div>
+      <div class="vopt">
+        <span id="fade-order-label">Order</span>
+        <div class="seg full words" role="group" aria-labelledby="fade-order-label" id="fade-order">
+          <button type="button" id="fadeorder-core" data-v="core">From the core</button>
+          <button type="button" id="fadeorder-scatter" data-v="scatter">Scatter</button>
+          <button type="button" id="fadeorder-rows" data-v="rows">Rows</button>
+        </div>
+      </div>
+      <p class="note" id="fade-note"></p>
+    </section>
+
+    <section class="group" id="tempo">
+      <h2>Tempo <small>tap along with the music</small></h2>
+      <div class="tempo">
+        <button type="button" class="btn primary tap" id="tap" aria-label="Tap the tempo">Tap</button>
+        <div class="bpm">
+          <output id="bpm-out" for="tap">No tempo</output>
+          <span class="beats" id="beats" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        </div>
+        <button type="button" class="linkish" id="bpm-stop" hidden>Stop</button>
+      </div>
+      <div class="row">
+        <span>Rings <small>from the core</small></span>
+        <div class="seg words" role="group" aria-label="Rings from the core" id="t-rings">
+          <button type="button" id="trings-off" data-v="off">Off</button>
+          <button type="button" id="trings-beat" data-v="beat">Each beat</button>
+          <button type="button" id="trings-bar" data-v="bar">Each bar</button>
+        </div>
+      </div>
+      <div class="row">
+        <span>Changes land</span>
+        <div class="seg words" role="group" aria-label="Changes land" id="t-quant">
+          <button type="button" id="tquant-now" data-v="now">Now</button>
+          <button type="button" id="tquant-beat" data-v="beat">Next beat</button>
+          <button type="button" id="tquant-bar" data-v="bar">Next bar</button>
+        </div>
+      </div>
+      <p class="note" id="tempo-note"></p>
     </section>
 
     <section class="sliders">
@@ -1227,6 +1328,10 @@ kbd {
   const QUALITY_CAP = { full: 4.2e6, balanced: 2.1e6, light: 0.9e6 };
   const SP_SIZES = [0.02, 0.05, 0.1, 0.2];
   const MIDI_TARGETS = ["speed", "strength", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "levels", "hue", "tstrength", "tsize", "msens", "mvol", "cstrength", "gdur", "spspread", "spcx", "spcy", "spcz", "spdens", "spcut"];
+  // MIDI pads can tap the tempo or call a cue.
+  const NOTE_TARGETS = ["tap", "cue1", "cue2", "cue3", "cue4", "cue5", "cue6", "cue7", "cue8"];
+  const FADE_LENS = [0, 1, 2, 4, 8, 16];
+  const FADE_ORDERS = { core: 1, scatter: 2, rows: 3 };
   const APP_URL = "https://serski.github.io/pixel-machine/";
   const isOutput = location.hash === "#output";
   // A canvas link (?canvas=4821&…) opens one exact work full screen and leaves the screen's own settings alone.
@@ -1237,6 +1342,9 @@ kbd {
 
   // ---------- state ----------
   const FIELD_KEYS = ["grid", "format", "levels", "reach", "falloff", "round", "stretch", "tilt", "centers", "warp", "grain", "palette", "hue", "invert", "seed", "wells"];
+  // A cue keeps the look of the work: the study, its shape, palette and tones, its movement and its music reactions.
+  const CUE_N = 8;
+  const CUE_KEYS = FIELD_KEYS.concat(["sigpat", "sigink", "motion", "speed", "strength", "mreact"]);
   const DEFAULTS = {
     grid: 50, format: "1x1", levels: 12, reach: 100, falloff: 85, round: 50, stretch: 18, tilt: 0, centers: 1, warp: 30, grain: 35,
     palette: "cerulean", hue: 229, invert: false, seed: 4821, wells: null, sigpat: "dots", sigink: "white",
@@ -1248,7 +1356,8 @@ kbd {
     cmode: "shadow", cstrength: 60, cmirror: true,
     gmode: "off", gorder: "core", gdur: 20,
     prpaper: "a3", prborder: 20, prcaption: true, prdpi: 300,
-    exchange: 0, exquality: "full", tvcount: 12, midimap: {},
+    exchange: 0, exquality: "full", tvcount: 12, midimap: {}, midinotes: {},
+    fadelen: 2, fadeorder: "core", bpm: 0, trings: "beat", tquant: "beat", cues: [null, null, null, null, null, null, null, null],
     spmode: "cover", spsize: 0.05, spdens: 55, spcx: 50, spcy: 35, spcz: 50, spspread: 100, spcut: 12,
     spview: "orbit", spscan: true, spup: "y", spturn: true,
   };
@@ -1289,7 +1398,8 @@ kbd {
       if (raw) {
         const s = JSON.parse(raw);
         for (const k of Object.keys(DEFAULTS)) {
-          if (k === "wells") continue;
+          // The tempo is tapped fresh each time: a saved one would start ringing on a random beat.
+          if (k === "wells" || k === "bpm") continue;
           if (k in s && typeof s[k] === typeof DEFAULTS[k]) state[k] = s[k];
         }
         if (Array.isArray(s.wells) && s.wells.length === 4 && s.wells.every(w => w && typeof w.x === "number" && typeof w.y === "number" && typeof w.s === "number")) state.wells = s.wells;
@@ -1339,6 +1449,39 @@ kbd {
       for (const [cc, id] of Object.entries(state.midimap)) if (/^\d{1,3}$/.test(cc) && MIDI_TARGETS.includes(id)) mm[cc] = id;
     }
     state.midimap = mm;
+    const mn = {};
+    if (state.midinotes && typeof state.midinotes === "object" && !Array.isArray(state.midinotes)) {
+      for (const [n, id] of Object.entries(state.midinotes)) if (/^\d{1,3}$/.test(n) && NOTE_TARGETS.includes(id)) mn[n] = id;
+    }
+    state.midinotes = mn;
+    if (!FADE_LENS.includes(state.fadelen)) state.fadelen = DEFAULTS.fadelen;
+    if (!Object.keys(FADE_ORDERS).includes(state.fadeorder)) state.fadeorder = "core";
+    state.bpm = state.bpm >= 40 && state.bpm <= 240 ? Math.round(state.bpm * 10) / 10 : 0;
+    if (!["off", "beat", "bar"].includes(state.trings)) state.trings = "beat";
+    if (!["now", "beat", "bar"].includes(state.tquant)) state.tquant = "beat";
+    const cl = Array.isArray(state.cues) ? state.cues : [];
+    state.cues = Array.from({ length: CUE_N }, (_, i) => cleanCue(cl[i]));
+  }
+  const CUE_RANGES = { levels: [2, 32], reach: [40, 180], falloff: [40, 160], round: [0, 100], stretch: [-60, 60], tilt: [-90, 90], centers: [1, 4], warp: [0, 100], grain: [0, 100], hue: [0, 359], speed: [4, 120], strength: [0, 100] };
+  // A saved cue, checked the way saved settings are, so an old or edited one can't break the work.
+  function cleanCue(c) {
+    if (!c || typeof c !== "object" || Array.isArray(c)) return null;
+    const s = {};
+    for (const k of CUE_KEYS) if (k !== "wells") s[k] = typeof c[k] === typeof DEFAULTS[k] ? c[k] : DEFAULTS[k];
+    for (const [k, [lo, hi]] of Object.entries(CUE_RANGES)) s[k] = Number.isFinite(s[k]) ? Math.max(lo, Math.min(hi, Math.round(s[k]))) : DEFAULTS[k];
+    if (!(Number.isInteger(s.seed) && s.seed > 0 && s.seed < 2147483647)) s.seed = DEFAULTS.seed;
+    if (!GRIDS.includes(s.grid)) s.grid = DEFAULTS.grid;
+    if (!FORMATS.some(f => f.id === s.format)) s.format = "1x1";
+    if (!PALETTES.some(p => p.id === s.palette)) s.palette = DEFAULTS.palette;
+    if (s.sigpat !== "dots" && s.sigpat !== "lines") s.sigpat = "dots";
+    if (s.sigink !== "white" && s.sigink !== "black") s.sigink = "white";
+    s.motion = [...motionSet(s)].join(",");
+    s.mreact = [...reactSet(s)].join(",");
+    const okWell = w => w && Number.isFinite(w.x) && Number.isFinite(w.y) && Number.isFinite(w.s);
+    s.wells = Array.isArray(c.wells) && c.wells.length === 4 && c.wells.every(okWell)
+      ? c.wells.map(w => ({ x: q4(Math.max(-1.3, Math.min(1.3, w.x))), y: q4(Math.max(-1.3, Math.min(1.3, w.y))), s: Math.max(0.1, Math.min(2, w.s)) }))
+      : seedWells(s.seed);
+    return s;
   }
   let persistTimer = 0;
   function persist() {
@@ -1578,9 +1721,11 @@ uniform int uGrowOrder;
 uniform vec3 uGround;
 uniform vec2 uOrigin, uPx;
 uniform float uResY, uFlip;
-uniform int uSS, uSig, uSigN, uOut;
+uniform int uSS, uSig, uSigN, uOut, uKeyOut;
 uniform vec3 uInk, uPaper;
 out vec4 outColor;
+// Crossfades: when this square takes the new look, from 0 (first) to 1 (it keeps the old look).
+float gKey = 1.0;
 const float NS = ${NS.toFixed(8)};
 ${SIG_GLSL}
 vec3 sigColor(ivec2 c, vec2 a, int lv) {
@@ -1657,6 +1802,12 @@ vec3 interactAt(vec2 p) {
   if (uCamAmt > 0.0) r += camAt(p);
   return r;
 }
+// The order squares come in: from the dark core outward, scattered, or row by row.
+float orderKey(ivec2 c, float d, int order) {
+  if (order == 2) return hash(c, uSeed ^ 0x9e3779b9u);
+  if (order == 3) return (float(c.y) + hash(c, uSeed ^ 0x2545f491u) * 0.9) / uGridN.y;
+  return clamp(d, 0.0, 1.25) / 1.25 * 0.93 + hash(c, uSeed ^ 0x51ed27u) * 0.07;
+}
 int levelAt(ivec2 c, vec3 tc) {
   vec2 p = ((vec2(c) + 0.5) / uGridN * 2.0 - 1.0) * uExt;
   if (uSS == 1 && (uTouchN > 0 || uCamAmt > 0.0)) tc = interactAt(p);
@@ -1693,14 +1844,9 @@ int levelAt(ivec2 c, vec3 tc) {
   }
   if (uNw > 1) d = -log(max(sum, 1e-30)) / 7.0;
   if (uGam != 1.0 && d > 0.0) d = pow(d, uGam);
+  if (uKeyOut > 0) gKey = min(orderKey(c, d, uKeyOut), 0.99);
   // Growth: squares appear in order (from the core, scattered, or row by row) as uGrow runs from 0 to 1.
-  if (uGrow < 1.0) {
-    float key;
-    if (uGrowOrder == 2) key = hash(c, uSeed ^ 0x9e3779b9u);
-    else if (uGrowOrder == 3) key = (float(c.y) + hash(c, uSeed ^ 0x2545f491u) * 0.9) / uGridN.y;
-    else key = clamp(d, 0.0, 1.25) / 1.25 * 0.93 + hash(c, uSeed ^ 0x51ed27u) * 0.07;
-    if (key > uGrow) return -1;
-  }
+  if (uGrow < 1.0 && orderKey(c, d, uGrowOrder) > uGrow) { gKey = 1.0; return -1; }
   if (uRipple > 0.0) d += uRipple * sin(d * 19.0 - uT * 2.2);
   for (int i = 0; i < 6; i++) {
     if (i >= uBeatN) break;
@@ -1726,6 +1872,7 @@ void main() {
   }
   if (uSS > 1 && (uTouchN > 0 || uCamAmt > 0.0)) tc = interactAt(((uOrigin + pix * uPx) * 2.0 - 1.0) * uExt);
   vec3 col = vec3(0.0);
+  float keys = 0.0;
   for (int j = 0; j < 3; j++) {
     if (j >= uSS) break;
     for (int i = 0; i < 3; i++) {
@@ -1733,18 +1880,24 @@ void main() {
       vec2 sub = (vec2(float(i), float(j)) + 0.5) / float(uSS) - 0.5;
       vec2 a = uOrigin + (pix + sub) * uPx;
       ivec2 c = clamp(ivec2(floor(a * uGridN)), ivec2(0), G - 1);
+      gKey = 1.0;
       int lv = levelAt(c, tc);
       col += lv < 0 ? uGround : (uSig > 0 ? sigColor(c, a, lv) : uLut[lv]);
+      keys += gKey;
     }
   }
-  outColor = vec4(col / float(uSS * uSS), 1.0);
+  float n = float(uSS * uSS);
+  outColor = vec4(col / n, uKeyOut > 0 ? keys / n : 1.0);
 }`;
 
   let art = $("art");
   let camTex = null, quadVao = null, fboDepth = null;
-  let gl = null, prog = null, U = {}, noiseTex = null, glNoiseSeed = null, fbo = null, fboTex = null, fboW = 0, fboH = 0, maxTile = 2048, glLost = false;
+  let gl = null, prog = null, U = {}, noiseSlots = [], fbo = null, fboTex = null, fboW = 0, fboH = 0, maxTile = 2048, glLost = false;
   let ctx2d = null;
   let lut = null, lutDirty = true, lutF = new Float32Array(96), lutVersion = 0;
+  // Crossfades: the program that joins the old look and the new, its offscreen pictures, and the fade under way.
+  let fadeGL = null, fade = null;
+  const FT = { w: 0, h: 0, a: null, b: null, f: null, idle: 0 };
 
   function initGL() {
     try {
@@ -1772,18 +1925,12 @@ void main() {
     const names = ["uNoise", "uLut", "uGridN", "uExt", "uL", "uReach", "uGam", "uPe", "uNorm", "uScale", "uRot", "uWarp", "uGrain", "uShimmer",
       "uSeed", "uShimmerSeed", "uWells", "uNw", "uT", "uMorph", "uFlow", "uRipple", "uSwirl", "uWave",
       "uTouch", "uTouchN", "uTouchMode", "uTouchSize", "uOrigin", "uPx", "uResY", "uFlip", "uSS", "uDeepen", "uBeats", "uBeatN",
-      "uCam", "uCamAmt", "uCamMode", "uCamXf", "uCamTexel", "uGrow", "uGrowOrder", "uGround", "uSig", "uSigN", "uOut", "uInk", "uPaper"];
+      "uCam", "uCamAmt", "uCamMode", "uCamXf", "uCamTexel", "uGrow", "uGrowOrder", "uGround", "uSig", "uSigN", "uOut", "uInk", "uPaper", "uKeyOut"];
     U = {};
     names.forEach(n => { U[n] = gl.getUniformLocation(prog, n); });
     quadVao = gl.createVertexArray();
     gl.bindVertexArray(quadVao);
-    noiseTex = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, noiseTex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    noiseSlots = [];
     gl.uniform1i(U.uNoise, 0);
     camTex = gl.createTexture();
     gl.activeTexture(gl.TEXTURE2);
@@ -1797,8 +1944,8 @@ void main() {
     gl.uniform1i(U.uCam, 2);
     gl.activeTexture(gl.TEXTURE0);
     cam.dirty = true;
-    glNoiseSeed = null;
     fbo = null; fboTex = null; fboW = fboH = 0;
+    fadeGL = null; FT.a = FT.b = FT.f = null; FT.w = FT.h = 0; fade = null;
     maxTile = Math.max(256, Math.min(2048, gl.getParameter(gl.MAX_TEXTURE_SIZE), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)));
     lutDirty = true;
     return true;
@@ -1839,18 +1986,34 @@ void main() {
     return n;
   }
 
+  // Noise for two studies at once (a crossfade draws both), so neither is uploaded again every frame.
+  function bindNoise(seed) {
+    let sl = noiseSlots.find(x => x.seed === seed);
+    gl.activeTexture(gl.TEXTURE0);
+    if (!sl) {
+      if (noiseSlots.length < 2) {
+        sl = { tex: gl.createTexture() };
+        gl.bindTexture(gl.TEXTURE_2D, sl.tex);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+      } else {
+        sl = noiseSlots[noiseSlots.length - 1];
+        gl.bindTexture(gl.TEXTURE_2D, sl.tex);
+      }
+      sl.seed = seed;
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, NT, NT, 0, gl.RG, gl.FLOAT, noiseFor(seed));
+    } else gl.bindTexture(gl.TEXTURE_2D, sl.tex);
+    noiseSlots = [sl].concat(noiseSlots.filter(x => x !== sl));
+  }
   function drawGL(P, tgt) {
     gl.bindVertexArray(quadVao);
     gl.disable(gl.DEPTH_TEST);
     gl.bindFramebuffer(gl.FRAMEBUFFER, tgt.fb || null);
     gl.viewport(0, 0, tgt.w, tgt.h);
     gl.useProgram(prog);
-    if (glNoiseSeed !== P.seed) {
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, noiseTex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG16F, NT, NT, 0, gl.RG, gl.FLOAT, noiseFor(P.seed));
-      glNoiseSeed = P.seed;
-    }
+    bindNoise(P.seed);
     if (tgt.lut) { gl.uniform3fv(U.uLut, tgt.lut); lutDirty = true; }
     else if (lutDirty) { gl.uniform3fv(U.uLut, lutF); lutDirty = false; }
     gl.uniform2f(U.uGridN, P.cols, P.rows);
@@ -1911,6 +2074,7 @@ void main() {
     gl.uniform1f(U.uFlip, tgt.flip ? 1 : 0);
     gl.uniform1i(U.uSS, tgt.ss);
     gl.uniform1i(U.uOut, tgt.levels ? 1 : 0);
+    gl.uniform1i(U.uKeyOut, tgt.key || 0);
     gl.uniform1i(U.uSig, tgt.levels || tgt.plain ? 0 : P.sig || 0);
     gl.uniform1i(U.uSigN, P.sigN || 1);
     gl.uniform3fv(U.uInk, P.ink || [1, 1, 1]);
@@ -2111,6 +2275,158 @@ void main() {
     fboW = w; fboH = h;
   }
 
+  // ---------- crossfades: one look becomes the next, square by square ----------
+  // Both looks are drawn offscreen. The new one carries each square's turn in its alpha, and a last pass
+  // shows the old look in every square whose turn hasn't come yet. Colors are never blended.
+  const FADE_FS = `#version 300 es
+precision highp float;
+precision highp sampler2D;
+uniform sampler2D uA, uB;
+uniform float uP;
+uniform int uBlend;
+out vec4 o;
+void main() {
+  ivec2 ij = ivec2(gl_FragCoord.xy);
+  vec4 a = texelFetch(uA, ij, 0), b = texelFetch(uB, ij, 0);
+  // Pixel flow's streaming squares have no fixed place, so for those few seconds the two looks blend.
+  o = vec4(uBlend == 1 ? mix(a.rgb, b.rgb, uP) : (b.a < uP ? b.rgb : a.rgb), 1.0);
+}`;
+  function ensureFadeGL() {
+    if (fadeGL) return true;
+    const pr = spProgram(VS, FADE_FS);
+    if (!pr) return false;
+    fadeGL = { prog: pr, uA: gl.getUniformLocation(pr, "uA"), uB: gl.getUniformLocation(pr, "uB"), uP: gl.getUniformLocation(pr, "uP"), uBlend: gl.getUniformLocation(pr, "uBlend") };
+    return true;
+  }
+  function fadeTarget(w, h) {
+    const t = { tex: gl.createTexture(), fb: gl.createFramebuffer(), rb: gl.createRenderbuffer() };
+    gl.activeTexture(gl.TEXTURE6);
+    gl.bindTexture(gl.TEXTURE_2D, t.tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, t.fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t.tex, 0);
+    // Pixel flow sorts its squares by depth, so each picture gets a depth buffer too.
+    gl.bindRenderbuffer(gl.RENDERBUFFER, t.rb);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, w, h);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, t.rb);
+    const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    if (ok) return t;
+    dropTarget(t);
+    return null;
+  }
+  function dropTarget(t) { if (t) { gl.deleteFramebuffer(t.fb); gl.deleteTexture(t.tex); gl.deleteRenderbuffer(t.rb); } }
+  function freeFadeTargets() {
+    if (gl) ["a", "b", "f"].forEach(k => dropTarget(FT[k]));
+    FT.a = FT.b = FT.f = null;
+    FT.w = FT.h = 0;
+  }
+  function ensureFadeTargets(w, h) {
+    if (FT.a && FT.b && FT.w === w && FT.h === h) return true;
+    // A picture held mid-fade can't follow a new screen size: the fade ends there instead.
+    if (fade && fade.from.slot) return false;
+    freeFadeTargets();
+    FT.a = fadeTarget(w, h);
+    FT.b = FT.a && fadeTarget(w, h);
+    if (!FT.b) { freeFadeTargets(); return false; }
+    FT.w = w; FT.h = h;
+    return true;
+  }
+  function composite(dst, A, B, p, blend) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, dst ? dst.fb : null);
+    gl.viewport(0, 0, FT.w, FT.h);
+    gl.disable(gl.DEPTH_TEST);
+    gl.useProgram(fadeGL.prog);
+    gl.bindVertexArray(quadVao);
+    gl.activeTexture(gl.TEXTURE6);
+    gl.bindTexture(gl.TEXTURE_2D, A.tex);
+    gl.activeTexture(gl.TEXTURE7);
+    gl.bindTexture(gl.TEXTURE_2D, B.tex);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(fadeGL.uA, 6);
+    gl.uniform1i(fadeGL.uB, 7);
+    gl.uniform1f(fadeGL.uP, p);
+    gl.uniform1i(fadeGL.uBlend, blend ? 1 : 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    if (dst) gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+  // Fade lengths count seconds, or beats while a tempo is set.
+  const fadeMs = () => state.fadelen * (tempoOn() ? beatMs() : 1000);
+  function fadeProgress(now) {
+    if (!fade) return null;
+    // Growing over the old study: the new one covers it as it grows, until it is whole.
+    if (fade.grow) return growNow() >= 1 ? null : 1;
+    const p = (now - fade.t0) / fade.ms;
+    return p >= 1 ? null : p <= 0 ? 0 : p * p * (3 - 2 * p);
+  }
+  function drawFade(P, tgt, opts) {
+    const p = fadeProgress(performance.now());
+    if (p == null || !ensureFadeGL() || !ensureFadeTargets(tgt.w, tgt.h)) { endFade(); return false; }
+    const fr = fade.from;
+    if (!fr.slot) {
+      // The old look keeps moving while it gives way. With Fill the screen, it takes the screen's shape too.
+      const ro = Object.assign({}, opts);
+      if (exhibit.active && state.exFill) { const r = ratioOf(state); ro.dims = dimsFor(fr.s.grid, r[0], r[1]); }
+      if (fr.grow != null) ro.grow = fr.grow;
+      const PA = fieldParams(fr.s, time, true, ro);
+      drawWork(PA, Object.assign({}, tgt, { fb: FT.a.fb, lut: fr.lut, ss: ssFor(PA, tgt.px) }));
+    }
+    drawWork(P, Object.assign({}, tgt, { fb: FT.b.fb, key: FADE_ORDERS[fade.order] || 1 }));
+    fade.blend = P.pflow > 0 && flowPhase(P.t) > FLOW_HOLD;
+    composite(null, fr.slot ? FT[fr.slot] : FT.a, FT.b, p, fade.blend);
+    fade.shown = true;
+    return true;
+  }
+  // A change in the middle of a crossfade: hold the picture exactly as it is and fade on from there.
+  function freezeFade() {
+    if (!fade || !fade.shown || !FT.a || !FT.b || !ensureFadeGL()) return null;
+    const p = fadeProgress(performance.now());
+    const dst = fade.from.slot === "f" ? "a" : "f";
+    if (!FT[dst]) FT[dst] = fadeTarget(FT.w, FT.h);
+    if (!FT[dst]) return null;
+    composite(FT[dst], fade.from.slot ? FT[fade.from.slot] : FT.a, FT.b, p == null ? 1 : p, fade.blend);
+    return { slot: dst };
+  }
+  function startFade(from, o) {
+    if (fade && fade.shown) from = freezeFade() || from;
+    else if (fade) from = fade.from;
+    fade = { from, t0: performance.now(), ms: Math.max(1, o.ms || 1), order: o.order || state.fadeorder, grow: !!o.grow, shown: false, blend: false };
+    needsDraw = true;
+  }
+  function endFade() {
+    if (!fade) return;
+    fade = null;
+    FT.idle = performance.now();
+    needsDraw = true;
+  }
+  // Changes to the look: new studies, palettes, presets and cues. Asked for while performing, they can wait for
+  // the next beat or bar; then they crossfade, unless the length is Cut.
+  let pendingJump = null;
+  function jump(mutate, o) {
+    o = o || {};
+    const at = o.quant ? quantTime(performance.now()) : 0;
+    if (at) { pendingJump = { at, mutate, o }; updateCueUI(); return; }
+    doJump(mutate, o);
+  }
+  function doJump(mutate, o) {
+    const from = state.fadelen > 0 && !o.cut && gl && !glLost && !space.active && Dw
+      ? { s: JSON.parse(JSON.stringify(state)), lut: new Float32Array(lutF) } : null;
+    const grew = growNow();
+    mutate();
+    // A frame of a new shape can't fade (outside Fill the screen), and neither can the 3D space.
+    if (!from || space.active || (!(exhibit.active && state.exFill) && from.s.format !== state.format)) { endFade(); return; }
+    const grow = !!o.grow && state.gmode === "once";
+    if (grow) from.grow = grew;
+    const f = { ms: fadeMs(), order: state.fadeorder, grow };
+    startFade(from, f);
+    if (live.chan && !isOutput && outputConnected()) sendState(Object.assign({ fromGrow: from.grow }, f));
+  }
+
   // ---------- layout + view ----------
   const app = $("app"), frame = $("frame"), stage = $("stage");
   const view = { z: 1, x: 0.5, y: 0.5 };
@@ -2184,6 +2500,13 @@ void main() {
   }
 
   function isMoving() { return !!gl && state.playing && motionSet(state).size > 0; }
+  // When a screen pixel covers several squares, it averages a few of them.
+  function ssFor(P, px) {
+    const cpp = P.cols * px[0];
+    let ss = cpp > 1.25 ? Math.min(3, Math.ceil(cpp)) : 1;
+    if (isMoving() && ss > 2) ss = 2;
+    return ss;
+  }
   function render() {
     if (!Dw) return;
     if (gl && !glLost) {
@@ -2193,12 +2516,11 @@ void main() {
       opts.pulses = livePulses();
       opts.grow = growNow();
       const P = fieldParams(state, time, true, opts);
-      if (space.active) { drawSpace(P, { w: Dw, h: Dh }); return; }
+      if (space.active) { endFade(); drawSpace(P, { w: Dw, h: Dh }); return; }
       const span = 1 / view.z, px = [span / Dw, span / Dh];
-      const cpp = P.cols * px[0];
-      let ss = cpp > 1.25 ? Math.min(3, Math.ceil(cpp)) : 1;
-      if (isMoving() && ss > 2) ss = 2;
-      drawWork(P, { w: Dw, h: Dh, origin: [view.x - span / 2, view.y - span / 2], px, ss, touch: true });
+      const tgt = { w: Dw, h: Dh, origin: [view.x - span / 2, view.y - span / 2], px, ss: ssFor(P, px), touch: true };
+      if (fade && drawFade(P, tgt, opts)) return;
+      drawWork(P, tgt);
     } else if (ctx2d) {
       cpuRender();
     }
@@ -2227,6 +2549,10 @@ void main() {
     if (pulses.length) needsDraw = true;
     tickGrowth(now);
     tickAutoChange(now);
+    tickTempo();
+    if (pendingJump && performance.now() >= pendingJump.at) { const j = pendingJump; pendingJump = null; doJump(j.mutate, j.o); updateCueUI(); }
+    if (fade) needsDraw = true;
+    else if (FT.a && now - FT.idle > 8000) freeFadeTargets();
     if (needsDraw) { needsDraw = false; render(); }
     sendFrame();
     if (recorder) updateRecTime();
@@ -2376,12 +2702,14 @@ void main() {
     });
   }
   function applyPreset(pr) {
-    const s = presetState(pr);
-    FIELD_KEYS.forEach(k => { state[k] = s[k]; });
-    view.z = 1; view.x = view.y = 0.5;
-    colorChanged(true);
-    layout();
-    changed();
+    jump(() => {
+      const s = presetState(pr);
+      FIELD_KEYS.forEach(k => { state[k] = s[k]; });
+      view.z = 1; view.x = view.y = 0.5;
+      colorChanged(true);
+      layout();
+      changed();
+    });
   }
 
   FORMATS.forEach(f => {
@@ -2406,6 +2734,7 @@ void main() {
       state.format = f.id;
       touches = [];
       view.z = 1; view.x = view.y = 0.5;
+      endFade();
       layout();
       changed();
     });
@@ -2443,10 +2772,12 @@ void main() {
     b.setAttribute("aria-label", `${n} squares along the long side`);
     b.addEventListener("click", () => {
       if (state.grid === n) return;
-      state.grid = n;
-      view.z = 1; view.x = view.y = 0.5;
-      layout();
-      changed();
+      jump(() => {
+        state.grid = n;
+        view.z = 1; view.x = view.y = 0.5;
+        layout();
+        changed();
+      });
     });
     $("grids").append(b);
   });
@@ -2497,11 +2828,11 @@ void main() {
     s.className = "name";
     s.textContent = pal.name;
     b.append(sw, s);
-    b.addEventListener("click", () => { state.palette = pal.id; colorChanged(); changed(); });
+    b.addEventListener("click", () => { if (state.palette !== pal.id) jump(() => { state.palette = pal.id; colorChanged(); changed(); }); });
     $("palettes").append(b);
   });
-  document.querySelectorAll("#sig-pat button").forEach(b => b.addEventListener("click", () => { state.sigpat = b.dataset.v; changed(); }));
-  document.querySelectorAll("#sig-ink button").forEach(b => b.addEventListener("click", () => { state.sigink = b.dataset.v; colorChanged(true); paintSwatches(); changed(); }));
+  document.querySelectorAll("#sig-pat button").forEach(b => b.addEventListener("click", () => { if (state.sigpat !== b.dataset.v) jump(() => { state.sigpat = b.dataset.v; changed(); }); }));
+  document.querySelectorAll("#sig-ink button").forEach(b => b.addEventListener("click", () => { if (state.sigink !== b.dataset.v) jump(() => { state.sigink = b.dataset.v; colorChanged(true); paintSwatches(); changed(); }); }));
   function colorChanged(skipSwatches) {
     buildLUT();
     if (!skipSwatches && state.palette === "custom") paintSwatches();
@@ -2544,6 +2875,9 @@ void main() {
     updateCanvasUI();
     updatePerfUI();
     updateSpaceUI();
+    updateCueUI();
+    updateFadeUI();
+    updateTempoUI();
     updateLabel();
     updateZoomUI();
     updateSave();
@@ -2564,15 +2898,19 @@ void main() {
     });
   });
   sliders.hue.addEventListener("input", () => { state.hue = +sliders.hue.value; colorChanged(); changed(); });
-  document.querySelectorAll("#centers button").forEach(b => b.addEventListener("click", () => { state.centers = +b.dataset.n; changed(); }));
-  $("invert").addEventListener("click", () => { state.invert = !state.invert; colorChanged(); changed(); });
-  $("variation").addEventListener("click", newVariation);
-  function newVariation() {
-    state.seed = 1000 + Math.floor(Math.random() * 9000);
-    const w0 = state.wells[0];
-    state.wells = seedWells(state.seed, [w0.x, w0.y]);
-    if (state.gmode === "once") restartGrowth();
-    changed();
+  document.querySelectorAll("#centers button").forEach(b => b.addEventListener("click", () => { if (state.centers !== +b.dataset.n) jump(() => { state.centers = +b.dataset.n; changed(); }); }));
+  $("invert").addEventListener("click", () => jump(() => { state.invert = !state.invert; colorChanged(); changed(); }));
+  $("variation").addEventListener("click", () => newVariation());
+  // A new study. Asked for while performing, it can wait for the beat; with Grow once on, it grows over the old one.
+  function newVariation(o) {
+    o = o || {};
+    jump(() => {
+      state.seed = 1000 + Math.floor(Math.random() * 9000);
+      const w0 = state.wells[0];
+      state.wells = seedWells(state.seed, [w0.x, w0.y]);
+      if (state.gmode === "once") restartGrowth();
+      changed();
+    }, { quant: !o.now, grow: true, cut: !!o.cut });
   }
   document.querySelectorAll("#t-mode button").forEach(b => b.addEventListener("click", () => { state.touch = b.dataset.v; touches = []; changed(); }));
   document.querySelectorAll("#t-drag button").forEach(b => b.addEventListener("click", () => { state.dragmode = b.dataset.v; changed(); }));
@@ -3734,7 +4072,7 @@ void main() {
     if (c === growth.cycle) return;
     const first = growth.cycle < 0;
     growth.cycle = c;
-    if (!first && exhibit.pendingChange && !isOutput) { exhibit.pendingChange = false; newVariation(); }
+    if (!first && exhibit.pendingChange && !isOutput) { exhibit.pendingChange = false; newVariation({ now: true, cut: true }); }
   }
   // Exhibitions: a new study every few minutes. With looping growth, the change waits for the next empty field.
   function tickAutoChange(now) {
@@ -3790,18 +4128,26 @@ void main() {
     changed();
   }
   function cyclePalette(dir) {
-    const i = PALETTES.findIndex(pl => pl.id === state.palette);
-    state.palette = PALETTES[(i + dir + PALETTES.length) % PALETTES.length].id;
-    colorChanged();
-    changed();
+    // Presses while a palette change waits for the beat add up.
+    if (pendingJump && pendingJump.o.steps != null) { pendingJump.o.steps += dir; return; }
+    const o = { quant: true, steps: dir };
+    jump(() => {
+      const n = PALETTES.length, i = PALETTES.findIndex(pl => pl.id === state.palette);
+      state.palette = PALETTES[(((i + o.steps) % n) + n) % n].id;
+      colorChanged();
+      changed();
+    }, o);
   }
   document.addEventListener("keydown", e => {
     const t = e.target, tag = t && t.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
     if (e.metaKey || e.ctrlKey || e.altKey || !gl) return;
-    if (/^[1-9]$/.test(e.key)) { e.preventDefault(); toggleMotion(MOTIONS[+e.key - 1].id); }
+    // Shift + 1–8 calls a cue. Where Shift + a number key types the digit itself, the digit keeps its movement.
+    if (e.shiftKey && /^Digit[1-8]$/.test(e.code) && !/^[0-9]$/.test(e.key)) { e.preventDefault(); if (!e.repeat) recallCue(+e.code.slice(5) - 1); }
+    else if (/^[1-9]$/.test(e.key)) { e.preventDefault(); toggleMotion(MOTIONS[+e.key - 1].id); }
     else if (e.key === "[" || e.key === "]") { e.preventDefault(); cyclePalette(e.key === "]" ? 1 : -1); }
     else if (e.key === "b" || e.key === "B") { e.preventDefault(); firePulse(1); }
+    else if ((e.key === "t" || e.key === "T") && !e.repeat) { e.preventDefault(); tapTempo(); }
   });
   $("p-pulse").addEventListener("click", () => firePulse(1));
 
@@ -3821,7 +4167,7 @@ void main() {
     if (!d || d.length < 2) return;
     const type = d[0] & 0xf0, a = d[1], b = d.length > 2 ? d[2] : 0;
     if (type === 0xB0) {
-      if (midi.learn && midi.target) {
+      if (midi.learn && midi.target && MIDI_TARGETS.includes(midi.target)) {
         for (const k of Object.keys(state.midimap)) if (state.midimap[k] === midi.target) delete state.midimap[k];
         state.midimap[a] = midi.target;
         perfStatus(`Knob ${a} now controls ${sliderName(midi.target)}.`);
@@ -3832,7 +4178,18 @@ void main() {
       const id = state.midimap[a] || (a === 1 ? "strength" : null);
       if (id) setFromMidi(id, b / 127);
     } else if (type === 0x90 && b > 0) {
-      firePulse(0.4 + 1.1 * b / 127);
+      if (midi.learn && NOTE_TARGETS.includes(midi.target)) {
+        for (const k of Object.keys(state.midinotes)) if (state.midinotes[k] === midi.target) delete state.midinotes[k];
+        state.midinotes[a] = midi.target;
+        perfStatus(`Pad ${a} now ${midi.target === "tap" ? "taps the tempo" : `calls cue ${midi.target.slice(3)}`}.`);
+        markLearn(null);
+        changed();
+        return;
+      }
+      const act = state.midinotes[a];
+      if (act === "tap") tapTempo();
+      else if (act) recallCue(+act.slice(3) - 1);
+      else firePulse(0.4 + 1.1 * b / 127);
     }
   }
   function bindMidiInputs() {
@@ -3860,11 +4217,12 @@ void main() {
   }
   function markLearn(id) {
     midi.target = id;
-    document.querySelectorAll(".ctrl.learning").forEach(c => c.classList.remove("learning"));
+    document.querySelectorAll(".learning").forEach(c => c.classList.remove("learning"));
     if (!id) return;
-    const c = $(id) && $(id).closest(".ctrl");
+    const pad = NOTE_TARGETS.includes(id);
+    const c = pad ? $(id === "tap" ? "tap" : "cue-" + id.slice(3)) : $(id) && $(id).closest(".ctrl");
     if (c) c.classList.add("learning");
-    perfStatus(`Now turn a knob for ${sliderName(id)}.`);
+    perfStatus(pad ? `Now hit a pad or key for ${id === "tap" ? "Tap" : `cue ${id.slice(3)}`}.` : `Now turn a knob for ${sliderName(id)}.`);
   }
   function renderMaps() {
     const ul = $("midi-maps");
@@ -3881,13 +4239,25 @@ void main() {
       li.append(sp, rm);
       ul.append(li);
     }
-    ul.hidden = !entries.length;
+    const pads = Object.entries(state.midinotes).sort((x, y) => +x[0] - +y[0]);
+    for (const [n, id] of pads) {
+      const li = document.createElement("li");
+      const sp = document.createElement("span");
+      sp.textContent = `Pad ${n} → ${id === "tap" ? "Tap tempo" : `Cue ${id.slice(3)}`}`;
+      const rm = document.createElement("button");
+      rm.type = "button";
+      rm.textContent = "Remove";
+      rm.addEventListener("click", () => { delete state.midinotes[n]; changed(); });
+      li.append(sp, rm);
+      ul.append(li);
+    }
+    ul.hidden = !entries.length && !pads.length;
   }
   $("midi-connect").addEventListener("click", connectMidi);
   $("midi-learn").addEventListener("click", () => {
     midi.learn = !midi.learn;
     markLearn(null);
-    perfStatus(midi.learn ? "Click a slider, then turn a knob." : "");
+    perfStatus(midi.learn ? "Click a slider, a cue or Tap, then turn a knob or hit a pad." : "");
     updatePerfUI();
   });
   document.querySelectorAll('.panel input[type="range"]').forEach(el => {
@@ -3895,6 +4265,203 @@ void main() {
     el.addEventListener("pointerdown", pick);
     el.addEventListener("focus", pick);
   });
+
+  // ---------- cues: looks saved for performing ----------
+  const cueStatus = msg => { $("cue-status").textContent = msg; };
+  let cueStore = false, cueClearArm = 0;
+  for (let i = 0; i < CUE_N; i++) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "cue empty";
+    b.id = "cue-" + (i + 1);
+    const n = document.createElement("span");
+    n.className = "cue-n";
+    n.textContent = String(i + 1);
+    const c = document.createElement("canvas");
+    c.width = c.height = 24;
+    c.setAttribute("aria-hidden", "true");
+    const nm = document.createElement("span");
+    nm.className = "cue-name";
+    b.append(n, c, nm);
+    b.addEventListener("click", () => {
+      if (midi.learn) { markLearn("cue" + (i + 1)); return; }
+      if (cueStore || !state.cues[i]) saveCue(i); else recallCue(i);
+    });
+    $("cue-grid").append(b);
+  }
+  const palLabel = s => { const p = PALETTES.find(x => x.id === s.palette) || PALETTES[0]; return p.custom ? `Hue ${s.hue}°` : p.name; };
+  function cueText(c) {
+    const ms = [...motionSet(c)].map(id => MOTIONS.find(m => m.id === id).name.toLowerCase());
+    return `Study No. ${c.seed}, ${palLabel(c)}, ${c.levels} tones, ${ms.length ? ms.join(" and ") : "still"}`;
+  }
+  // A small picture of the cue, drawn on the CPU like the preset thumbnails.
+  function drawCueThumb(cv, c) {
+    const x2 = cv.getContext("2d");
+    x2.clearRect(0, 0, cv.width, cv.height);
+    if (!c) return;
+    const s = Object.assign({}, DEFAULTS, c), f = FORMATS.find(x => x.id === s.format) || FORMATS[0];
+    const dm = dimsFor(24, f.w, f.h), pal = PALETTES.find(p => p.id === s.palette) || PALETTES[0];
+    const lv = computeCPU(fieldParams(s, 0, false, { dims: dm }), new Uint8Array(dm.cols * dm.rows));
+    const im = x2.createImageData(dm.cols, dm.rows);
+    for (let i = 0; i < lv.length; i++) {
+      const t = s.levels <= 1 ? 0 : s.invert && !pal.signal ? lv[i] / (s.levels - 1) : 1 - lv[i] / (s.levels - 1);
+      const v = Math.round(s.sigink === "black" ? 255 * (1 - t) : 255 * t);
+      const col = pal.signal ? [v, v, v] : rampColor(pal, t, s.hue);
+      im.data[i * 4] = col[0]; im.data[i * 4 + 1] = col[1]; im.data[i * 4 + 2] = col[2]; im.data[i * 4 + 3] = 255;
+    }
+    x2.putImageData(im, (24 - dm.cols) >> 1, (24 - dm.rows) >> 1);
+  }
+  function cueThumbs() { state.cues.forEach((c, i) => drawCueThumb($("cue-" + (i + 1)).querySelector("canvas"), c)); }
+  function saveCue(i) {
+    const s = JSON.parse(JSON.stringify(state)), c = {};
+    CUE_KEYS.forEach(k => { c[k] = s[k]; });
+    state.cues[i] = cleanCue(c);
+    cueStore = false;
+    drawCueThumb($("cue-" + (i + 1)).querySelector("canvas"), state.cues[i]);
+    cueStatus(`Cue ${i + 1} saved.`);
+    changed();
+  }
+  function recallCue(i) {
+    const c = state.cues[i];
+    if (!c) { cueStatus(`Cue ${i + 1} is empty. Click it to save the work as it is now.`); return; }
+    cueStatus("");
+    jump(() => {
+      const reframe = c.grid !== state.grid || c.format !== state.format;
+      Object.assign(state, JSON.parse(JSON.stringify(c)));
+      sanitize();
+      const ms = motionSet(state);
+      if (ms.size && gl) { state.playing = true; lastToggled = [...ms][0]; }
+      if (reframe) { view.z = 1; view.x = view.y = 0.5; touches = []; layout(); }
+      buildLUT();
+      paintSwatches();
+      changed();
+    }, { quant: true, cue: i });
+  }
+  const cueSame = c => !!c && CUE_KEYS.every(k => JSON.stringify(c[k]) === JSON.stringify(state[k]));
+  function updateCueUI() {
+    $("cue-grid").classList.toggle("storing", cueStore);
+    const waiting = pendingJump && pendingJump.o.cue != null ? pendingJump.o.cue : -1;
+    state.cues.forEach((c, i) => {
+      const b = $("cue-" + (i + 1)), text = c ? `Cue ${i + 1}: ${cueText(c)}` : `Cue ${i + 1}: empty`;
+      b.classList.toggle("empty", !c);
+      b.classList.toggle("queued", waiting === i);
+      b.setAttribute("aria-pressed", String(cueSame(c)));
+      b.querySelector(".cue-name").textContent = c ? palLabel(c) : "Empty";
+      b.title = text;
+      b.setAttribute("aria-label", c ? text : `${text}. Saves the work as it is now.`);
+    });
+    const st = $("cue-store");
+    st.setAttribute("aria-pressed", String(cueStore));
+    st.textContent = cueStore ? "On" : "Off";
+    const any = state.cues.some(Boolean);
+    $("cue-clear").hidden = !any;
+    if (!cueClearArm) $("cue-clear").textContent = "Clear all cues";
+    $("cue-note").textContent = cueStore ? "Pick the cue to save the work into. A look already saved there is replaced."
+      : any ? "Click a cue to bring its look back with the crossfade. Click an empty one to save the work as it is now."
+      : "Click a cue to save the work as it is now: the study, its shape, palette and tones, movement and music reactions.";
+  }
+  $("cue-store").addEventListener("click", () => { cueStore = !cueStore; cueStatus(""); updateCueUI(); });
+  $("cue-clear").addEventListener("click", () => {
+    if (!cueClearArm) {
+      $("cue-clear").textContent = "Press again to clear all cues";
+      cueClearArm = setTimeout(() => { cueClearArm = 0; updateCueUI(); }, 4000);
+      return;
+    }
+    clearTimeout(cueClearArm);
+    cueClearArm = 0;
+    state.cues = state.cues.map(() => null);
+    cueThumbs();
+    cueStatus("All cues cleared.");
+    changed();
+  });
+
+  // ---------- crossfade settings ----------
+  const FADE_NOTES = {
+    core: "The new look grows out of its dark core over the old one, square by square.",
+    scatter: "The new look arrives square by square, scattered across the old one.",
+    rows: "The new look is woven in row by row, from the top.",
+  };
+  function updateFadeUI() {
+    document.querySelectorAll("#fade-len button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.v === state.fadelen)));
+    document.querySelectorAll("#fade-order button").forEach(b => { b.setAttribute("aria-pressed", String(b.dataset.v === state.fadeorder)); b.disabled = state.fadelen === 0; });
+    $("fade-unit").textContent = tempoOn() ? `beats at ${Math.round(state.bpm)} BPM` : "seconds";
+    $("fade-note").textContent = state.fadelen === 0 ? "Changes cut straight to the new look."
+      : `${FADE_NOTES[state.fadeorder]} Cues, new variations, palettes, presets and the exhibition's changes all use it.${state.gmode === "once" ? " With Grow once on, a new variation grows over the old study instead." : ""}`;
+  }
+  document.querySelectorAll("#fade-len button").forEach(b => b.addEventListener("click", () => { state.fadelen = +b.dataset.v; changed(); }));
+  document.querySelectorAll("#fade-order button").forEach(b => b.addEventListener("click", () => { state.fadeorder = b.dataset.v; changed(); }));
+
+  // ---------- tempo: tap along with the music ----------
+  // Beat one is the first tap after a pause. Later, one tap on its own moves beat one and keeps the tempo.
+  const tempo = { taps: [], count: 0, origin: 0, beat: null };
+  const beatDots = $("beats").children;
+  function tempoOn() { return state.bpm > 0; }
+  function beatMs() { return 60000 / state.bpm; }
+  function tapTempo() {
+    const now = performance.now(), T = tempo.taps;
+    if (T.length && now - T[T.length - 1] > 2000) { T.length = 0; tempo.count = 0; }
+    T.push(now);
+    if (T.length > 8) T.shift();
+    tempo.count++;
+    if (T.length >= 2) {
+      const bpm = 60000 * (T.length - 1) / (T[T.length - 1] - T[0]);
+      if (bpm >= 40 && bpm <= 240) state.bpm = Math.round(bpm * 10) / 10;
+    }
+    // This tap is a beat, counted in bars from the first tap of the run.
+    tempo.origin = tempoOn() ? now - ((tempo.count - 1) % 4) * beatMs() : now;
+    tempo.beat = null;
+    const b = $("tap");
+    b.classList.add("hit");
+    clearTimeout(tapTempo.t);
+    tapTempo.t = setTimeout(() => b.classList.remove("hit"), 90);
+    changed();
+  }
+  function stopTempo() {
+    state.bpm = 0;
+    tempo.taps.length = 0;
+    tempo.count = 0;
+    if (pendingJump) { const j = pendingJump; pendingJump = null; doJump(j.mutate, j.o); }
+    changed();
+  }
+  function showBeat(i) { for (let k = 0; k < beatDots.length; k++) beatDots[k].classList.toggle("on", k === i); }
+  // The beat clock: lights the bar's four squares and sends rings out on the beat or the bar.
+  function tickTempo() {
+    if (!tempoOn() || isOutput || canvasMode) { if (tempo.beat !== null) { tempo.beat = null; showBeat(-1); } return; }
+    const k = Math.floor((performance.now() - tempo.origin) / beatMs() + 1e-6);
+    if (k === tempo.beat) return;
+    tempo.beat = k;
+    const one = ((k % 4) + 4) % 4;
+    showBeat(one);
+    if (!gl) return;
+    if (state.trings === "beat") firePulse(one === 0 ? 1.1 : 0.7);
+    else if (state.trings === "bar" && one === 0) firePulse(1.2);
+  }
+  // When a change asked for now should land: right away, or on the next beat or bar.
+  function quantTime(now) {
+    if (!tempoOn() || state.tquant === "now") return 0;
+    const per = beatMs(), step = state.tquant === "bar" ? 4 : 1, k = (now - tempo.origin) / per;
+    const b = Math.floor(k / step) * step;
+    // Pressed right on the beat (or just after it): it counts as on time.
+    if ((k - b) * per < 50) return 0;
+    return tempo.origin + (b + step) * per;
+  }
+  function updateTempoUI() {
+    const on = tempoOn();
+    $("bpm-out").textContent = on ? `${Math.round(state.bpm)} BPM` : tempo.taps.length ? "Keep tapping…" : "No tempo";
+    $("bpm-stop").hidden = !on;
+    document.querySelectorAll("#t-rings button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === state.trings)));
+    document.querySelectorAll("#t-quant button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === state.tquant)));
+    const land = state.tquant === "now" ? "Cues, new studies and the palette keys change straight away." : `Cues, new studies and the palette keys wait for the next ${state.tquant}.`;
+    $("tempo-note").textContent = on ? `Beat one is your first tap; tap once to move it. ${land}`
+      : "Tap four or more times on the beat, or press T. Then rings, cues and crossfades follow the music.";
+  }
+  const tapOrLearn = () => { if (midi.learn) markLearn("tap"); else tapTempo(); };
+  // Taps count on pointer down, which is when a finger lands on the beat.
+  $("tap").addEventListener("pointerdown", e => { if (e.pointerType === "mouse" && e.button !== 0) return; tapOrLearn(); });
+  $("tap").addEventListener("click", e => { if (e.detail === 0) tapOrLearn(); });
+  $("bpm-stop").addEventListener("click", stopTempo);
+  document.querySelectorAll("#t-rings button").forEach(b => b.addEventListener("click", () => { state.trings = b.dataset.v; changed(); }));
+  document.querySelectorAll("#t-quant button").forEach(b => b.addEventListener("click", () => { state.tquant = b.dataset.v; changed(); }));
 
   // ---------- output window for a projector or second screen ----------
   const live = { chan: null, outputSeen: 0, queued: false };
@@ -3916,6 +4483,8 @@ void main() {
       return;
     }
     if (m.t === "state" && m.state) {
+      // A crossfade on the controller plays here too, from the picture this window shows now.
+      const from = m.fade && gl && !glLost && Dw ? { s: JSON.parse(JSON.stringify(state)), lut: new Float32Array(lutF) } : null;
       Object.assign(state, m.state);
       sanitize();
       buildLUT();
@@ -3923,6 +4492,10 @@ void main() {
       applyExhibitLook();
       layout();
       needsDraw = true;
+      if (from) {
+        if (m.fade.grow) { from.grow = m.fade.fromGrow; remote.grow = 0; }
+        startFade(from, m.fade);
+      }
     } else if (m.t === "frame") {
       time = m.time;
       remote.audio = m.audio;
@@ -3939,7 +4512,7 @@ void main() {
       needsDraw = true;
     }
   }
-  function sendState() { if (live.chan && !isOutput) live.chan.postMessage({ t: "state", state: JSON.parse(JSON.stringify(state)) }); }
+  function sendState(fadeInfo) { if (live.chan && !isOutput) live.chan.postMessage({ t: "state", state: JSON.parse(JSON.stringify(state)), fade: fadeInfo || null }); }
   function queueSendState() {
     if (!live.chan || isOutput || live.queued || !outputConnected()) return;
     live.queued = true;
@@ -4449,7 +5022,7 @@ void main() {
   }
   function bootLive() {
     if (!canvasMode) openChannel();
-    if (!gl) ["camera", "growth", "perform"].forEach(id => { $(id).hidden = true; });
+    if (!gl) ["camera", "growth", "perform", "fade", "tempo"].forEach(id => { $(id).hidden = true; });
     refreshJump();
     if (isOutput) { startOutputMode(); return; }
     setInterval(updatePerfUI, 3000);
@@ -5532,6 +6105,7 @@ void main() {
     }
     bindCanvas();
     drawPresetThumbs();
+    cueThumbs();
     paintSwatches();
     buildLUT();
     syncUI();

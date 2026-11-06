@@ -26,6 +26,7 @@ Once installed it opens in its own window and works offline.
 **Make**
 
 - Grids from 20 to 5000 squares along the long side, in square, portrait, story, wide, panorama and banner formats
+- Tiles: a second template of square tiles, each one flat color, flowing between nine colors you set on a map (the corners, the middle of each edge and the middle). From 1 to 64 tiles across and down, with sharp or soft edges, wobble and grain. In-between colors you leave unset follow the corners, through their hues or mixed. Three presets are sampled from the tile designs, and New variation turns or mirrors the colors. Movement, music, touch, growth, crossfades, cues, prints (PNG, PDF and SVG), video, exhibitions and canvas links all work with tiles
 - Palettes sampled from the original studies, plus custom hues
 - Signal: pure black and white, with every tone drawn as a pattern of dots or lines, white on black or black on white
 - Movement: flow, morph, drift, breathe, ripple, swirl, wave and shimmer, in any combination

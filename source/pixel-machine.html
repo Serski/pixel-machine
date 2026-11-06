@@ -255,6 +255,24 @@ html.exhibiting, html.exhibiting body { overflow: hidden; }
 .group h2 small { font-size: inherit; font-weight: 500; letter-spacing: .06em; text-transform: none; }
 
 .presets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.presets.tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.presets.tiles .preset { grid-template-columns: minmax(0, 1fr); align-content: start; justify-items: center; gap: 7px; padding: 10px 4px 8px; text-align: center; }
+.tile-ed { position: relative; width: min(100% - 44px, 200px); margin: 20px auto 22px; aspect-ratio: 1; }
+.tile-ed canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; box-shadow: var(--shadow); }
+.tsw { position: absolute; width: 30px; height: 30px; transform: translate(-50%, -50%); border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--ink); cursor: pointer; }
+.tsw input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.tsw:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
+.tsw.tl { left: 0; top: 0; }
+.tsw.tr { left: 100%; top: 0; }
+.tsw.bl { left: 0; top: 100%; }
+.tsw.br { left: 100%; top: 100%; }
+.tsw.mid { left: 50%; top: 50%; }
+.tsw.t { left: 50%; top: 0; }
+.tsw.l { left: 0; top: 50%; }
+.tsw.r { left: 100%; top: 50%; }
+.tsw.b { left: 50%; top: 100%; }
+.tsw.in { width: 24px; height: 24px; }
+.tsw.auto { outline: 1px dashed var(--ink); outline-offset: 3px; }
 .preset {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
@@ -596,6 +614,7 @@ kbd {
 
     <nav class="jump" id="jump" aria-label="Jump to a section">
       <button type="button" data-to="sec-format">Shape</button>
+      <button type="button" data-to="sec-tiles" hidden>Tiles</button>
       <button type="button" data-to="space">Space</button>
       <button type="button" data-to="movement">Motion</button>
       <button type="button" data-to="music">Music</button>
@@ -609,9 +628,72 @@ kbd {
       <button type="button" data-to="sec-color">Color</button>
     </nav>
 
+    <section class="group" id="sec-tpl">
+      <h2>Template</h2>
+      <div class="seg full words" role="group" aria-label="Template" id="tpl">
+        <button type="button" id="tpl-field" data-v="field">Tone field</button>
+        <button type="button" id="tpl-tiles" data-v="tiles">Tiles</button>
+      </div>
+      <p class="note" id="tpl-note"></p>
+    </section>
+
     <section class="group">
       <h2>Start from your artworks</h2>
       <div class="presets" id="presets"></div>
+      <div class="presets tiles" id="tile-presets"></div>
+    </section>
+
+    <section class="group" id="sec-tiles" hidden>
+      <h2>Tiles <small>nine colors flow across the grid</small></h2>
+      <div class="tile-ed" id="tile-ed">
+        <canvas id="t-prev" width="10" height="10" aria-hidden="true"></canvas>
+        <label class="tsw tl" title="Top left"><input type="color" id="tcol-0" aria-label="Top left color"></label>
+        <label class="tsw t in" title="Middle of the top edge"><input type="color" id="tcol-1" aria-label="Color at the middle of the top edge"></label>
+        <label class="tsw tr" title="Top right"><input type="color" id="tcol-2" aria-label="Top right color"></label>
+        <label class="tsw l in" title="Middle of the left edge"><input type="color" id="tcol-3" aria-label="Color at the middle of the left edge"></label>
+        <label class="tsw mid in" title="Middle"><input type="color" id="tcol-4" aria-label="Color at the middle"></label>
+        <label class="tsw r in" title="Middle of the right edge"><input type="color" id="tcol-5" aria-label="Color at the middle of the right edge"></label>
+        <label class="tsw bl" title="Bottom left"><input type="color" id="tcol-6" aria-label="Bottom left color"></label>
+        <label class="tsw b in" title="Middle of the bottom edge"><input type="color" id="tcol-7" aria-label="Color at the middle of the bottom edge"></label>
+        <label class="tsw br" title="Bottom right"><input type="color" id="tcol-8" aria-label="Bottom right color"></label>
+      </div>
+      <p class="note" id="t-mid-note"></p>
+      <button type="button" class="linkish" id="tfollow" hidden>Let the in-between colors follow the corners</button>
+      <div class="sliders">
+        <div class="ctrl">
+          <label for="tcols">Columns</label><output id="tcols-out" for="tcols">10</output>
+          <input type="range" id="tcols" min="1" max="64" step="1" value="10">
+        </div>
+        <div class="ctrl">
+          <label for="trows">Rows</label><output id="trows-out" for="trows">10</output>
+          <input type="range" id="trows" min="1" max="64" step="1" value="10">
+        </div>
+      </div>
+      <div class="row" id="t-blend-row">
+        <span>Colors follow</span>
+        <div class="seg words" role="group" aria-label="How the in-between colors follow the corners" id="t-blend">
+          <button type="button" id="tblend-hue" data-v="hue">Through hues</button>
+          <button type="button" id="tblend-mix" data-v="mix">Mixed</button>
+        </div>
+      </div>
+      <div class="row">
+        <span>Edges</span>
+        <div class="seg words" role="group" aria-label="Tile edges" id="t-edge">
+          <button type="button" id="tedge-sharp" data-v="sharp">Sharp</button>
+          <button type="button" id="tedge-soft" data-v="soft">Soft</button>
+        </div>
+      </div>
+      <div class="sliders">
+        <div class="ctrl">
+          <label for="twarp">Wobble</label><output id="twarp-out" for="twarp">0%</output>
+          <input type="range" id="twarp" min="0" max="100" step="1" value="0">
+        </div>
+        <div class="ctrl">
+          <label for="tgrain">Grain</label><output id="tgrain-out" for="tgrain">0%</output>
+          <input type="range" id="tgrain" min="0" max="100" step="1" value="0">
+        </div>
+      </div>
+      <p class="note">New variation turns or mirrors the colors. Movement, music, touch, growth and the crossfade all work on the tiles.</p>
     </section>
 
     <section class="group" id="sec-format">
@@ -619,7 +701,7 @@ kbd {
       <div class="grid3" id="formats"></div>
     </section>
 
-    <section class="group">
+    <section class="group" id="sec-grid">
       <h2>Grid <small>squares along the long side</small></h2>
       <div class="grid4" id="grids"></div>
       <p class="note" id="grid-note"></p>
@@ -1101,14 +1183,14 @@ kbd {
       <p class="note" id="tempo-note"></p>
     </section>
 
-    <section class="sliders">
+    <section class="sliders" id="sec-tones">
       <div class="ctrl">
         <label for="levels">Tones</label><output id="levels-out" for="levels">12</output>
         <input type="range" id="levels" min="2" max="32" step="1" value="12">
       </div>
     </section>
 
-    <section class="group">
+    <section class="group" id="sec-form">
       <h2>Form</h2>
       <div class="sliders">
         <div class="ctrl">
@@ -1143,7 +1225,7 @@ kbd {
       </div>
     </section>
 
-    <section class="group">
+    <section class="group" id="sec-texture">
       <h2>Texture</h2>
       <div class="sliders">
         <div class="ctrl">
@@ -1212,7 +1294,7 @@ kbd {
   const coarse = mq("(pointer: coarse)");
   const ICON_PLAY = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1l9 5-9 5z"/></svg>';
   const ICON_PAUSE = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1h3v10H2zM7 1h3v10H7z"/></svg>';
-  const fileBase = () => `pixel-machine-argiris-ser-study-${state.seed}`;
+  const fileBase = () => `pixel-machine-argiris-ser-${state.tpl === "tiles" ? "tiles" : "study"}-${state.seed}`;
 
   // ---------- color ----------
   const toLin = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
@@ -1327,7 +1409,7 @@ kbd {
   ];
   const QUALITY_CAP = { full: 4.2e6, balanced: 2.1e6, light: 0.9e6 };
   const SP_SIZES = [0.02, 0.05, 0.1, 0.2];
-  const MIDI_TARGETS = ["speed", "strength", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "levels", "hue", "tstrength", "tsize", "msens", "mvol", "cstrength", "gdur", "spspread", "spcx", "spcy", "spcz", "spdens", "spcut"];
+  const MIDI_TARGETS = ["speed", "strength", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "levels", "hue", "tstrength", "tsize", "msens", "mvol", "cstrength", "gdur", "spspread", "spcx", "spcy", "spcz", "spdens", "spcut", "tcols", "trows", "twarp", "tgrain"];
   // MIDI pads can tap the tempo or call a cue.
   const NOTE_TARGETS = ["tap", "cue1", "cue2", "cue3", "cue4", "cue5", "cue6", "cue7", "cue8"];
   const FADE_LENS = [0, 1, 2, 4, 8, 16];
@@ -1344,7 +1426,7 @@ kbd {
   const FIELD_KEYS = ["grid", "format", "levels", "reach", "falloff", "round", "stretch", "tilt", "centers", "warp", "grain", "palette", "hue", "invert", "seed", "wells"];
   // A cue keeps the look of the work: the study, its shape, palette and tones, its movement and its music reactions.
   const CUE_N = 8;
-  const CUE_KEYS = FIELD_KEYS.concat(["sigpat", "sigink", "motion", "speed", "strength", "mreact"]);
+  const CUE_KEYS = FIELD_KEYS.concat(["sigpat", "sigink", "motion", "speed", "strength", "mreact", "tpl", "tcols", "trows", "tgrid", "tblend", "tedge", "twarp", "tgrain"]);
   const DEFAULTS = {
     grid: 50, format: "1x1", levels: 12, reach: 100, falloff: 85, round: 50, stretch: 18, tilt: 0, centers: 1, warp: 30, grain: 35,
     palette: "cerulean", hue: 229, invert: false, seed: 4821, wells: null, sigpat: "dots", sigink: "white",
@@ -1358,6 +1440,7 @@ kbd {
     prpaper: "a3", prborder: 20, prcaption: true, prdpi: 300,
     exchange: 0, exquality: "full", tvcount: 12, midimap: {}, midinotes: {},
     fadelen: 2, fadeorder: "core", bpm: 0, trings: "beat", tquant: "beat", cues: [null, null, null, null, null, null, null, null],
+    tpl: "field", tcols: 10, trows: 10, tgrid: ["#2bde93", "#008ce3", "#6a40a2", "#cdfbff", "#a3bfe6", "#c26caa", "#fefefe", "#fcd2e0", "#fd83b8"], tblend: "hue", tedge: "sharp", twarp: 0, tgrain: 0,
     spmode: "cover", spsize: 0.05, spdens: 55, spcx: 50, spcy: 35, spcz: 50, spspread: 100, spcut: 12,
     spview: "orbit", spscan: true, spup: "y", spturn: true,
   };
@@ -1366,6 +1449,13 @@ kbd {
       s: { grid: 20, format: "1x1", levels: 10, reach: 100, falloff: 80, round: 50, stretch: 18, tilt: 0, centers: 1, warp: 22, grain: 20, palette: "cerulean", invert: false, seed: 4821, w0: [-0.04, -0.03] } },
     { id: "pale", name: "Pale blue study", meta: "20 × 20 · 8 tones",
       s: { grid: 20, format: "1x1", levels: 8, reach: 82, falloff: 90, round: 48, stretch: 22, tilt: 0, centers: 1, warp: 28, grain: 55, palette: "glacier", invert: false, seed: 1307, w0: [-0.04, 0.12] } },
+  ];
+  // Tile grids sampled from the three uploaded designs: the corner tiles exactly, and the edge middles and middle
+  // that best fit the rest. Nine colors in reading order: top left, top, top right, left, middle, right, bottom left, bottom, bottom right.
+  const TILE_PRESETS = [
+    { id: "greenpink", name: "Green to pink", s: { tcols: 10, trows: 10, tgrid: ["#2bde93", "#008ce3", "#6a40a2", "#cdfbff", "#a3bfe6", "#c26caa", "#fefefe", "#fcd2e0", "#fd83b8"], tblend: "hue", tedge: "sharp" } },
+    { id: "greenmauve", name: "Green to mauve", s: { tcols: 5, trows: 6, tgrid: ["#11b05f", "#00809f", "#355a87", "#8cd2e8", "#7ba2c3", "#78768a", "#d1dbe5", "#cdbbbf", "#c98ab5"], tblend: "hue", tedge: "soft" } },
+    { id: "plumorange", name: "Plum to orange", s: { tcols: 5, trows: 5, tgrid: ["#8b7d97", "#8b4981", "#631e41", "#ce859f", "#be4b78", "#8c1829", "#f08321", "#ed2d00", "#b60319"], tblend: "hue", tedge: "soft" } },
   ];
   const state = Object.assign({}, DEFAULTS);
   const exhibit = { active: false, startT: 0, idleTimer: 0, wakeLock: null, wentFullscreen: false, output: false, tv: false, lastChange: 0, pendingChange: false };
@@ -1459,8 +1549,21 @@ kbd {
     state.bpm = state.bpm >= 40 && state.bpm <= 240 ? Math.round(state.bpm * 10) / 10 : 0;
     if (!["off", "beat", "bar"].includes(state.trings)) state.trings = "beat";
     if (!["now", "beat", "bar"].includes(state.tquant)) state.tquant = "beat";
+    cleanTiles(state);
     const cl = Array.isArray(state.cues) ? state.cues : [];
     state.cues = Array.from({ length: CUE_N }, (_, i) => cleanCue(cl[i]));
+  }
+  const isHex = h => typeof h === "string" && /^#[0-9a-f]{6}$/i.test(h);
+  // The Tiles settings of a state or a cue, checked so a bad value can't break the work.
+  function cleanTiles(s) {
+    if (s.tpl !== "tiles") s.tpl = "field";
+    for (const k of ["tcols", "trows"]) s[k] = Math.max(1, Math.min(64, Math.round(+s[k]) || DEFAULTS[k]));
+    for (const k of ["twarp", "tgrain"]) s[k] = Math.max(0, Math.min(100, Math.round(+s[k]) || 0));
+    // Nine colors: the corners always set, the others set or "" to follow the corners.
+    const g = Array.isArray(s.tgrid) && s.tgrid.length === 9 ? s.tgrid : null;
+    s.tgrid = g && [0, 2, 6, 8].every(i => isHex(g[i])) && g.every(h => h === "" || isHex(h)) ? g.map(h => h.toLowerCase()) : DEFAULTS.tgrid.slice();
+    if (s.tblend !== "mix") s.tblend = "hue";
+    if (s.tedge !== "soft") s.tedge = "sharp";
   }
   const CUE_RANGES = { levels: [2, 32], reach: [40, 180], falloff: [40, 160], round: [0, 100], stretch: [-60, 60], tilt: [-90, 90], centers: [1, 4], warp: [0, 100], grain: [0, 100], hue: [0, 359], speed: [4, 120], strength: [0, 100] };
   // A saved cue, checked the way saved settings are, so an old or edited one can't break the work.
@@ -1477,6 +1580,7 @@ kbd {
     if (s.sigink !== "white" && s.sigink !== "black") s.sigink = "white";
     s.motion = [...motionSet(s)].join(",");
     s.mreact = [...reactSet(s)].join(",");
+    cleanTiles(s);
     const okWell = w => w && Number.isFinite(w.x) && Number.isFinite(w.y) && Number.isFinite(w.s);
     s.wells = Array.isArray(c.wells) && c.wells.length === 4 && c.wells.every(okWell)
       ? c.wells.map(w => ({ x: q4(Math.max(-1.3, Math.min(1.3, w.x))), y: q4(Math.max(-1.3, Math.min(1.3, w.y))), s: Math.max(0.1, Math.min(2, w.s)) }))
@@ -1500,12 +1604,34 @@ kbd {
     return { cols, rows, a, ex: Math.sqrt(a), ey: 1 / Math.sqrt(a) };
   }
   const box = $("box");
+  const screenRatio = () => [Math.max(1, box.clientWidth || window.innerWidth), Math.max(1, box.clientHeight || window.innerHeight)];
+  const filling = s => s === state && exhibit.active && state.exFill;
   function ratioOf(s) {
-    if (s === state && exhibit.active && state.exFill) return [Math.max(1, box.clientWidth || window.innerWidth), Math.max(1, box.clientHeight || window.innerHeight)];
+    if (filling(s)) return screenRatio();
+    if (s.tpl === "tiles") return [s.tcols, s.trows];
     const f = FORMATS.find(x => x.id === s.format) || FORMATS[0];
     return [f.w, f.h];
   }
-  function dimsOf(s, grid) { const r = ratioOf(s); return dimsFor(grid == null ? s.grid : grid, r[0], r[1]); }
+  // Tiles keep their count. On a screen of another shape (Fill the screen), the short side keeps it
+  // and the long side gets as many square tiles as fit.
+  function tileDims(s, r) {
+    let cols = s.tcols, rows = s.trows;
+    if (r) {
+      const n = Math.min(cols, rows);
+      if (r[0] >= r[1]) { rows = n; cols = Math.max(1, Math.round(n * r[0] / r[1])); } else { cols = n; rows = Math.max(1, Math.round(n * r[1] / r[0])); }
+    }
+    const a = cols / rows;
+    return { cols, rows, a, ex: Math.sqrt(a), ey: 1 / Math.sqrt(a) };
+  }
+  function dimsOf(s, grid) {
+    if (s.tpl === "tiles") return tileDims(s, filling(s) ? screenRatio() : null);
+    const r = ratioOf(s);
+    return dimsFor(grid == null ? s.grid : grid, r[0], r[1]);
+  }
+  // The squares a look takes on this screen with Fill the screen on (the old look in a crossfade).
+  function dimsFilled(s) { const r = screenRatio(); return s.tpl === "tiles" ? tileDims(s, r) : dimsFor(s.grid, r[0], r[1]); }
+  // The shape of the frame outside Fill the screen.
+  function frameRatio(s) { if (s.tpl === "tiles") return s.tcols / s.trows; const f = FORMATS.find(x => x.id === s.format) || FORMATS[0]; return f.w / f.h; }
 
   // ---------- noise texture (shared by the GPU shader and the CPU copy) ----------
   const NT = 256, NP = 32, NS = 1.7 / NP;
@@ -1575,7 +1701,7 @@ kbd {
     const dm = opts.dims || dimsOf(s);
     const ms = withMotion ? motionSet(s) : new Set();
     const k = s.strength / 100, L = s.levels;
-    let st = s.stretch / 100, a = s.tilt * Math.PI / 180, warp = s.warp / 100 * 0.55, gam = s.falloff / 100;
+    let st = s.stretch / 100, a = s.tilt * Math.PI / 180, warp = (s.tpl === "tiles" ? s.twarp : s.warp) / 100 * 0.55, gam = s.falloff / 100;
     let reach = s.reach / 100;
     const wt = opts.wander;
     if (wt != null) {
@@ -1616,7 +1742,7 @@ kbd {
     }
     const pe = shapeExponent(s.round);
     const square = (2 / Math.sqrt(dm.cols * dm.rows)) / (s.reach / 100);
-    return {
+    const P = {
       cols: dm.cols, rows: dm.rows, ex: dm.ex, ey: dm.ey,
       L, reach, gam, pe, norm: pe === 1 ? 1 : pe === 2 ? 2 : pe > 30 ? 3 : 0,
       scx: Math.pow(2, st), scy: Math.pow(2, -st), ca: Math.cos(a), sa: Math.sin(a),
@@ -1639,6 +1765,24 @@ kbd {
       ink: s.sigink === "black" ? [0, 0, 0] : [1, 1, 1], paper: s.sigink === "black" ? [1, 1, 1] : [0, 0, 0],
       pflow: ms.has("pixelflow") ? Math.max(0.08, k) : 0,
       t, wells,
+    };
+    if (s.tpl === "tiles") Object.assign(P, tileParams(s, t, ms, k, reach, au, mr, sens));
+    return P;
+  }
+  // Tiles: the nine colors in OKLab, and how movement, music and texture act on them.
+  function tileParams(s, t, ms, k, reach, au, mr, sens) {
+    const lab = new Float32Array(27), pts = tilePoints(s);
+    pts.forEach((p, i) => lab.set(p, i * 3));
+    return {
+      tiles: 1, tlab: lab, tedge: s.tedge === "soft" ? 1 : 0,
+      // Breathing, the music's pulse and the exhibition's wander scale the colors around the middle.
+      tscale: reach / (s.reach / 100),
+      tshift: ms.has("drift") ? driftOffset(0, t, k) : [0, 0],
+      grain: s.tgrain / 100 * 0.12,
+      shimmer: (ms.has("shimmer") ? 0.07 * k : 0) + (au && mr.has("sparkle") ? 0.1 * sens * au.env[2] : 0),
+      ripple: ms.has("ripple") ? 0.035 * k : 0,
+      pflow: 0, sig: 0,
+      tground: tileGround(pts),
     };
   }
 
@@ -1670,6 +1814,70 @@ kbd {
         if (P.grain > 0) d += P.grain * (hashCell(x, y, P.seed) - 0.5);
         const lv = Math.floor(Math.max(-1, Math.min(2, d)) * L);
         out[idx++] = lv < 0 ? 0 : lv >= L ? L - 1 : lv;
+      }
+    }
+    return out;
+  }
+
+  // ---------- tiles on the CPU: thumbnails, the panel's map, and the whole picture without WebGL 2 ----------
+  // Nine colors (corners, edge middles, middle) and a smooth surface through all of them, as in the shader.
+  // An edge middle or the middle that isn't set follows the corners, through their hues or mixed.
+  const wrapPI = x => x - 2 * Math.PI * Math.floor((x + Math.PI) / (2 * Math.PI));
+  const sstep = (e0, e1, x) => { const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+  function lchMix(a, b, t) {
+    const ca = Math.hypot(a[1], a[2]), cb = Math.hypot(b[1], b[2]);
+    let ha = ca > 1e-6 ? Math.atan2(a[2], a[1]) : 0, hb = cb > 1e-6 ? Math.atan2(b[2], b[1]) : 0;
+    // A color with little or no chroma (white, greys) has no hue of its own and leans on the other's.
+    ha = hb + wrapPI(ha - hb) * sstep(0, 0.04, ca);
+    hb = ha + wrapPI(hb - ha) * sstep(0, 0.04, cb);
+    const h = ha + wrapPI(hb - ha) * t, c = ca + (cb - ca) * t;
+    return [a[0] + (b[0] - a[0]) * t, c * Math.cos(h), c * Math.sin(h)];
+  }
+  const labMixLinear = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  function tilePoints(s) {
+    const g = s.tgrid, m = s.tblend === "mix" ? labMixLinear : lchMix, P = g.map(h => (h ? hexToLab(h) : null));
+    const edge = (k, a, b) => { if (!P[k]) P[k] = m(P[a], P[b], 0.5); };
+    edge(1, 0, 2); edge(3, 0, 6); edge(5, 2, 8); edge(7, 6, 8);
+    if (!P[4]) { const a = m(P[1], P[7], 0.5), b = m(P[3], P[5], 0.5); P[4] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2]; }
+    return P;
+  }
+  function tileSpec(s) { return { pts: tilePoints(s) }; }
+  // Quadratic weights through 0, the middle and 1, so the surface meets every one of the nine colors.
+  const q3 = t => [2 * (t - 0.5) * (t - 1), -4 * t * (t - 1), 2 * t * (t - 0.5)];
+  function tileLabAt(T, u, v) {
+    const wu = q3(u), wv = q3(v), P = T.pts, lab = [0, 0, 0];
+    for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) { const w = wv[j] * wu[i], p = P[j * 3 + i]; lab[0] += p[0] * w; lab[1] += p[1] * w; lab[2] += p[2] * w; }
+    return lab;
+  }
+  const labRGB = lab => labToLinear(lab[0], lab[1], lab[2]).map(toSrgb);
+  const labHex = lab => "#" + labRGB(lab).map(v => v.toString(16).padStart(2, "0")).join("");
+  // The nine colors as shown in the panel, the following ones worked out from the corners.
+  const tileHexes = s => tilePoints(s).map(labHex);
+  // Tiles not grown yet show a pale ground: the lightest of the nine colors, most of the way to white.
+  function tileGround(pts) {
+    const L = pts.reduce((a, b) => (b[0] > a[0] ? b : a));
+    return labRGB([L[0] + (1 - L[0]) * 0.55, L[1] * 0.45, L[2] * 0.45]).map(v => v / 255);
+  }
+  // The square's turns and mirrors, as moves of the nine points: New variation keeps the colors and moves them.
+  const SYM_FNS = [(r, c) => [r, c], (r, c) => [c, 2 - r], (r, c) => [2 - r, 2 - c], (r, c) => [2 - c, r], (r, c) => [r, 2 - c], (r, c) => [2 - r, c], (r, c) => [c, r], (r, c) => [2 - c, 2 - r]];
+  function turnGrid(g, k) {
+    const out = new Array(9);
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) { const [r2, c2] = SYM_FNS[k](r, c); out[r2 * 3 + c2] = g[r * 3 + c]; }
+    return out;
+  }
+  // Still colors, one per tile, three bytes each.
+  function tileCells(s, dm) {
+    const T = tileSpec(s), C = dm.cols, R = dm.rows, out = new Uint8Array(C * R * 3);
+    const warp = s.twarp / 100 * 0.55, grain = s.tgrain / 100 * 0.12, nd = warp > 0 ? noiseFor(s.seed >>> 0) : null, o = new Float64Array(2);
+    for (let r = 0; r < R; r++) {
+      for (let c = 0; c < C; c++) {
+        let x = ((c + 0.5) / C * 2 - 1) * dm.ex, y = ((r + 0.5) / R * 2 - 1) * dm.ey;
+        if (nd) { fbm2(nd, x * NS + 0.11, y * NS + 0.23, o); x += warp * o[0]; y += warp * o[1]; }
+        const fx = (x / dm.ex + 1) * 0.5 * C - 0.5, fy = (y / dm.ey + 1) * 0.5 * R - 0.5;
+        const u = C > 1 ? Math.max(0, Math.min(1, fx / (C - 1))) : 0.5, v = R > 1 ? Math.max(0, Math.min(1, fy / (R - 1))) : 0.5;
+        const lab = tileLabAt(T, u, v);
+        if (grain) lab[0] += grain * (hashCell(c, r, s.seed >>> 0) - 0.5);
+        out.set(labRGB(lab), (r * C + c) * 3);
       }
     }
     return out;
@@ -1723,6 +1931,10 @@ uniform vec2 uOrigin, uPx;
 uniform float uResY, uFlip;
 uniform int uSS, uSig, uSigN, uOut, uKeyOut;
 uniform vec3 uInk, uPaper;
+uniform int uTiles, uTEdge;
+uniform vec3 uTC[9];
+uniform float uTScale;
+uniform vec2 uTShift;
 out vec4 outColor;
 // Crossfades: when this square takes the new look, from 0 (first) to 1 (it keeps the old look).
 float gKey = 1.0;
@@ -1860,6 +2072,61 @@ int levelAt(ivec2 c, vec3 tc) {
   d = clamp(d, -1.0, 2.0);
   return clamp(int(floor(d * float(uL))), 0, uL - 1);
 }
+// ----- Tiles: every square one flat color, from a smooth surface through nine colors -----
+// Quadratic weights through 0, the middle and 1: the surface meets the corners, the edge middles and the middle.
+vec3 q3(float t) { return vec3(2.0 * (t - 0.5) * (t - 1.0), -4.0 * t * (t - 1.0), 2.0 * t * (t - 0.5)); }
+vec3 tileLab(vec2 uv) {
+  vec3 wu = q3(uv.x), wv = q3(uv.y);
+  return (uTC[0] * wu.x + uTC[1] * wu.y + uTC[2] * wu.z) * wv.x
+       + (uTC[3] * wu.x + uTC[4] * wu.y + uTC[5] * wu.z) * wv.y
+       + (uTC[6] * wu.x + uTC[7] * wu.y + uTC[8] * wu.z) * wv.z;
+}
+vec3 labToSrgb(vec3 c) {
+  vec3 lms = vec3(c.x + 0.3963377774 * c.y + 0.2158037573 * c.z, c.x - 0.1055613458 * c.y - 0.0638541728 * c.z, c.x - 0.0894841775 * c.y - 1.2914855480 * c.z);
+  lms = lms * lms * lms;
+  vec3 lin = clamp(vec3(4.0767416621 * lms.x - 3.3077115913 * lms.y + 0.2309699292 * lms.z,
+    -1.2684380046 * lms.x + 2.6097574011 * lms.y - 0.3413193965 * lms.z,
+    -0.0041960863 * lms.x - 0.7034186147 * lms.y + 1.7076147010 * lms.z), 0.0, 1.0);
+  return mix(12.92 * lin, 1.055 * pow(lin, vec3(1.0 / 2.4)) - 0.055, step(vec3(0.0031308), lin));
+}
+// One tile's color: the corners and middle, read at the tile's center after movement, touch and music move it.
+vec3 tileAt(ivec2 c, vec3 tc) {
+  vec2 p = ((vec2(c) + 0.5) / uGridN * 2.0 - 1.0) * uExt;
+  if (uSS == 1 && (uTouchN > 0 || uCamAmt > 0.0)) tc = interactAt(p);
+  vec2 q = p;
+  if (uWarp > 0.0) q += uWarp * fbm2(p * NS + vec2(0.11, 0.23) + uMorph);
+  if (uFlow > 0.0) {
+    vec2 a = fbm2(p * NS * 1.3 + vec2(0.52, 0.21) + uT * vec2(0.013, -0.008));
+    vec2 b = fbm2(p * NS * 1.3 + a * 0.085 + vec2(0.31, 0.83) + uT * vec2(-0.009, 0.015));
+    q += uFlow * b;
+  }
+  if (uWave > 0.0) {
+    q.y += uWave * sin(p.x * 5.0 + uT * 1.4);
+    q.x += uWave * 0.6 * sin(p.y * 3.7 - uT * 1.1);
+  }
+  q += tc.xy;
+  if (uSwirl > 0.0) {
+    float ang = uSwirl * 0.5 * sin(uT * 0.45) * exp(-length(q) * 1.8), cs = cos(ang), sn = sin(ang);
+    q = vec2(q.x * cs - q.y * sn, q.x * sn + q.y * cs);
+  }
+  q = q / uTScale - uTShift;
+  vec2 f = (q / uExt + 1.0) * 0.5 * uGridN - 0.5;
+  vec2 uv = clamp(vec2(uGridN.x > 1.5 ? f.x / (uGridN.x - 1.0) : 0.5, uGridN.y > 1.5 ? f.y / (uGridN.y - 1.0) : 0.5), 0.0, 1.0);
+  float rho = length(p / uExt) * 0.884;
+  gKey = uKeyOut > 0 ? min(orderKey(c, rho, uKeyOut), 0.99) : 1.0;
+  if (uGrow < 1.0 && orderKey(c, rho, uGrowOrder) > uGrow) { gKey = 1.0; return uGround; }
+  vec3 lab = tileLab(uv);
+  if (uRipple > 0.0) lab.x += uRipple * 1.6 * sin(rho * 19.0 - uT * 2.2);
+  for (int i = 0; i < 6; i++) {
+    if (i >= uBeatN) break;
+    float x = (rho - uBeats[i].x * 0.55) / 0.05;
+    lab.x -= uBeats[i].y * 1.4 * exp(-x * x);
+  }
+  lab.x += tc.z * 0.5 - uDeepen;
+  if (uGrain > 0.0) lab.x += uGrain * (hash(c, uSeed) - 0.5);
+  if (uShimmer > 0.0) lab.x += uShimmer * (hash(c, uShimmerSeed) - 0.5);
+  return labToSrgb(lab);
+}
 void main() {
   vec2 pix = vec2(gl_FragCoord.x, uFlip > 0.5 ? gl_FragCoord.y : uResY - gl_FragCoord.y);
   ivec2 G = ivec2(uGridN + 0.5);
@@ -1871,6 +2138,35 @@ void main() {
     return;
   }
   if (uSS > 1 && (uTouchN > 0 || uCamAmt > 0.0)) tc = interactAt(((uOrigin + pix * uPx) * 2.0 - 1.0) * uExt);
+  if (uTiles == 1) {
+    vec3 tcol = vec3(0.0);
+    float tkeys = 0.0;
+    for (int j = 0; j < 3; j++) {
+      if (j >= uSS) break;
+      for (int i = 0; i < 3; i++) {
+        if (i >= uSS) break;
+        vec2 sub = (vec2(float(i), float(j)) + 0.5) / float(uSS) - 0.5;
+        vec2 a = uOrigin + (pix + sub) * uPx;
+        if (uTEdge == 1) {
+          // Soft edges: neighbouring tiles meet in a short blend, like paint on paper.
+          vec2 g = a * uGridN - 0.5, i0 = floor(g), fr = g - i0, w = smoothstep(0.36, 0.64, fr), nb = step(0.5, fr);
+          ivec2 b0 = ivec2(i0);
+          vec3 c00 = tileAt(clamp(b0, ivec2(0), G - 1), tc); float k00 = gKey;
+          vec3 c10 = tileAt(clamp(b0 + ivec2(1, 0), ivec2(0), G - 1), tc); float k10 = gKey;
+          vec3 c01 = tileAt(clamp(b0 + ivec2(0, 1), ivec2(0), G - 1), tc); float k01 = gKey;
+          vec3 c11 = tileAt(clamp(b0 + ivec2(1, 1), ivec2(0), G - 1), tc); float k11 = gKey;
+          tcol += mix(mix(c00, c10, w.x), mix(c01, c11, w.x), w.y);
+          tkeys += mix(mix(k00, k10, nb.x), mix(k01, k11, nb.x), nb.y);
+        } else {
+          tcol += tileAt(clamp(ivec2(floor(a * uGridN)), ivec2(0), G - 1), tc);
+          tkeys += gKey;
+        }
+      }
+    }
+    float tn = float(uSS * uSS);
+    outColor = vec4(tcol / tn, uKeyOut > 0 ? tkeys / tn : 1.0);
+    return;
+  }
   vec3 col = vec3(0.0);
   float keys = 0.0;
   for (int j = 0; j < 3; j++) {
@@ -1925,7 +2221,7 @@ void main() {
     const names = ["uNoise", "uLut", "uGridN", "uExt", "uL", "uReach", "uGam", "uPe", "uNorm", "uScale", "uRot", "uWarp", "uGrain", "uShimmer",
       "uSeed", "uShimmerSeed", "uWells", "uNw", "uT", "uMorph", "uFlow", "uRipple", "uSwirl", "uWave",
       "uTouch", "uTouchN", "uTouchMode", "uTouchSize", "uOrigin", "uPx", "uResY", "uFlip", "uSS", "uDeepen", "uBeats", "uBeatN",
-      "uCam", "uCamAmt", "uCamMode", "uCamXf", "uCamTexel", "uGrow", "uGrowOrder", "uGround", "uSig", "uSigN", "uOut", "uInk", "uPaper", "uKeyOut"];
+      "uCam", "uCamAmt", "uCamMode", "uCamXf", "uCamTexel", "uGrow", "uGrowOrder", "uGround", "uSig", "uSigN", "uOut", "uInk", "uPaper", "uKeyOut", "uTiles", "uTEdge", "uTC", "uTScale", "uTShift"];
     U = {};
     names.forEach(n => { U[n] = gl.getUniformLocation(prog, n); });
     quadVao = gl.createVertexArray();
@@ -2046,7 +2342,8 @@ void main() {
     gl.uniform1f(U.uGrow, P.grow == null ? 2 : P.grow);
     gl.uniform1i(U.uGrowOrder, P.growOrder || 1);
     const lf = tgt.lut || lutF, gi = (P.L - 1) * 3;
-    gl.uniform3f(U.uGround, lf[gi], lf[gi + 1], lf[gi + 2]);
+    if (P.tiles) gl.uniform3fv(U.uGround, P.tground);
+    else gl.uniform3f(U.uGround, lf[gi], lf[gi + 1], lf[gi + 2]);
     const camOn = !!tgt.touch && camActive();
     if (camOn && cam.dirty) {
       gl.activeTexture(gl.TEXTURE2);
@@ -2075,6 +2372,13 @@ void main() {
     gl.uniform1i(U.uSS, tgt.ss);
     gl.uniform1i(U.uOut, tgt.levels ? 1 : 0);
     gl.uniform1i(U.uKeyOut, tgt.key || 0);
+    gl.uniform1i(U.uTiles, P.tiles ? 1 : 0);
+    if (P.tiles) {
+      gl.uniform3fv(U.uTC, P.tlab);
+      gl.uniform1i(U.uTEdge, tgt.plain ? 0 : P.tedge);
+      gl.uniform1f(U.uTScale, P.tscale);
+      gl.uniform2f(U.uTShift, P.tshift[0], P.tshift[1]);
+    }
     gl.uniform1i(U.uSig, tgt.levels || tgt.plain ? 0 : P.sig || 0);
     gl.uniform1i(U.uSigN, P.sigN || 1);
     gl.uniform3fv(U.uInk, P.ink || [1, 1, 1]);
@@ -2371,7 +2675,7 @@ void main() {
     if (!fr.slot) {
       // The old look keeps moving while it gives way. With Fill the screen, it takes the screen's shape too.
       const ro = Object.assign({}, opts);
-      if (exhibit.active && state.exFill) { const r = ratioOf(state); ro.dims = dimsFor(fr.s.grid, r[0], r[1]); }
+      if (exhibit.active && state.exFill) ro.dims = dimsFilled(fr.s);
       if (fr.grow != null) ro.grow = fr.grow;
       const PA = fieldParams(fr.s, time, true, ro);
       drawWork(PA, Object.assign({}, tgt, { fb: FT.a.fb, lut: fr.lut, ss: ssFor(PA, tgt.px) }));
@@ -2419,7 +2723,7 @@ void main() {
     const grew = growNow();
     mutate();
     // A frame of a new shape can't fade (outside Fill the screen), and neither can the 3D space.
-    if (!from || space.active || (!(exhibit.active && state.exFill) && from.s.format !== state.format)) { endFade(); return; }
+    if (!from || space.active || (!(exhibit.active && state.exFill) && Math.abs(frameRatio(from.s) - frameRatio(state)) > 1e-6)) { endFade(); return; }
     const grow = !!o.grow && state.gmode === "once";
     if (grow) from.grow = grew;
     const f = { ms: fadeMs(), order: state.fadeorder, grow };
@@ -2466,10 +2770,21 @@ void main() {
 
   // ---------- CPU fallback display ----------
   let cpuCur = null, cpuImg = null, cpuFitKey = "";
-  function cpuFieldKey() { return JSON.stringify(FIELD_KEYS.map(k => k === "wells" ? state.wells.slice(0, state.centers) : state[k])) + "|" + dimsOf(state).rows; }
+  function cpuFieldKey() {
+    const tk = state.tpl === "tiles" ? JSON.stringify([state.tcols, state.trows, state.tgrid, state.tblend, state.twarp, state.tgrain]) : "";
+    return JSON.stringify(FIELD_KEYS.map(k => k === "wells" ? state.wells.slice(0, state.centers) : state[k])) + "|" + dimsOf(state).rows + "|" + tk;
+  }
   function cpuRender() {
     if (!ctx2d) return;
     const key = cpuFieldKey();
+    if ((!cpuCur || cpuCur.key !== key) && state.tpl === "tiles") {
+      // Tiles: one color per tile, looked up by its index.
+      const dm = dimsOf(state), cells = tileCells(state, dm), n = dm.cols * dm.rows;
+      const R = new Uint8Array(n), G = new Uint8Array(n), B = new Uint8Array(n), idx = new Uint16Array(n);
+      for (let i = 0; i < n; i++) { R[i] = cells[i * 3]; G[i] = cells[i * 3 + 1]; B[i] = cells[i * 3 + 2]; idx[i] = i; }
+      cpuCur = { key, cols: dm.cols, rows: dm.rows, levels: idx, R, G, B };
+      cpuFitKey = "";
+    }
     if (!cpuCur || cpuCur.key !== key) {
       const n = Math.min(state.grid, 600);
       const r = ratioOf(state);
@@ -2489,7 +2804,7 @@ void main() {
     for (let i = 0; i < Dw; i++) for (let k = 0; k < s; k++) xs[i * s + k] = Math.max(0, Math.min(C - 1, Math.floor((x0 + (i + (k + 0.5) / s) / Dw * span) * C)));
     for (let j = 0; j < Dh; j++) for (let k = 0; k < s; k++) ys[j * s + k] = Math.max(0, Math.min(Rr - 1, Math.floor((y0 + (j + (k + 0.5) / s) / Dh * span) * Rr))) * C;
     let o = 0;
-    const R = lut.r, G = lut.g, B = lut.b, ss = s * s;
+    const R = cpuCur.R || lut.r, G = cpuCur.G || lut.g, B = cpuCur.B || lut.b, ss = s * s;
     for (let j = 0; j < Dh; j++) for (let i = 0; i < Dw; i++) {
       let r = 0, g = 0, b = 0;
       for (let a = 0; a < s; a++) { const rb = ys[j * s + a]; for (let c = 0; c < s; c++) { const l = lv[rb + xs[i * s + c]]; r += R[l]; g += G[l]; b += B[l]; } }
@@ -2592,7 +2907,14 @@ void main() {
     $("save-note").innerHTML = "";
     const b = document.createElement("b");
     b.textContent = `${fmt(Ew)} × ${fmt(Eh)} px`;
-    $("save-note").append("Saves the current frame as a ", b, s > 1 ? ` PNG, ${s} px per square.` : " PNG, 1 px per square.");
+    const unit = state.tpl === "tiles" ? "tile" : "square";
+    $("save-note").append("Saves the current frame as a ", b, ` PNG, ${s} px per ${unit}.`);
+    if (state.tpl === "tiles") {
+      const tn = names.filter(n => n !== "pixel flow");
+      $("l-medium").textContent = `${tn.length ? `Square tiles in motion (${tn.join(", ")})` : "Square tiles"}, flat colors flowing across the grid${state.tedge === "soft" ? ", soft edges" : ""}`;
+      $("l-dims").textContent = `${fmt(dm.cols)} × ${fmt(dm.rows)} tiles · ${fmt(dm.cols * dm.rows)} in all`;
+      art.setAttribute("aria-label", `${ARTIST}, Study No. ${state.seed}: ${dm.cols} by ${dm.rows} grid of square tiles, each one flat color, the colors flowing across the grid${tn.length ? ", moving with " + tn.join(", ") : ""}.`);
+    }
     $("grid-note").textContent = state.grid === 20 && f.id === "1x1" ? "20 × 20 matches your two artworks."
       : `${fmt(dm.cols)} × ${fmt(dm.rows)} squares in this format.${state.grid >= 1000 ? " Zoom in on the work to see single squares." : ""}`;
     if (!gl && ctx2d) renderEl.textContent = state.grid > 600 ? "Basic mode: grids above 600 show at 600 here. Saved PNGs use the full grid." : "";
@@ -2661,7 +2983,7 @@ void main() {
   }
 
   // ---------- controls ----------
-  const sliderIds = ["levels", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "hue", "speed", "strength", "tstrength", "tsize", "msens", "mvol", "cstrength", "gdur", "prborder", "spspread", "spdens", "spcx", "spcy", "spcz", "spcut"];
+  const sliderIds = ["levels", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "hue", "speed", "strength", "tstrength", "tsize", "msens", "mvol", "cstrength", "gdur", "prborder", "spspread", "spdens", "spcx", "spcy", "spcz", "spcut", "tcols", "trows", "twarp", "tgrain"];
   const sliders = {};
   sliderIds.forEach(id => { sliders[id] = $(id); });
 
@@ -2705,12 +3027,118 @@ void main() {
     jump(() => {
       const s = presetState(pr);
       FIELD_KEYS.forEach(k => { state[k] = s[k]; });
+      state.tpl = "field";
       view.z = 1; view.x = view.y = 0.5;
       colorChanged(true);
       layout();
       changed();
     });
   }
+
+  // ---------- tiles: a grid of flat colors flowing in from four corners ----------
+  const putCells = (cv, cells, cols, rows) => {
+    if (cv.width !== cols || cv.height !== rows) { cv.width = cols; cv.height = rows; }
+    const x2 = cv.getContext("2d"), im = x2.createImageData(cols, rows);
+    for (let i = 0; i < cols * rows; i++) { im.data[i * 4] = cells[i * 3]; im.data[i * 4 + 1] = cells[i * 3 + 1]; im.data[i * 4 + 2] = cells[i * 3 + 2]; im.data[i * 4 + 3] = 255; }
+    x2.putImageData(im, 0, 0);
+  };
+  TILE_PRESETS.forEach(pr => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "preset";
+    b.id = "preset-" + pr.id;
+    const c = document.createElement("canvas");
+    const k = 44 / Math.max(pr.s.tcols, pr.s.trows);
+    c.style.width = Math.round(pr.s.tcols * k) + "px";
+    c.style.height = Math.round(pr.s.trows * k) + "px";
+    c.setAttribute("aria-hidden", "true");
+    const t = document.createElement("div");
+    const nm = document.createElement("b"); nm.textContent = pr.name;
+    const mt = document.createElement("span"); mt.textContent = `${pr.s.tcols} × ${pr.s.trows} tiles`;
+    t.append(nm, mt);
+    b.append(c, t);
+    b.addEventListener("click", () => applyTilePreset(pr));
+    $("tile-presets").append(b);
+    pr.canvas = c;
+  });
+  function drawTilePresetThumbs() {
+    TILE_PRESETS.forEach(pr => {
+      const s = Object.assign({}, DEFAULTS, pr.s, { twarp: 0, tgrain: 0 }), dm = tileDims(s);
+      putCells(pr.canvas, tileCells(s, dm), dm.cols, dm.rows);
+    });
+  }
+  function applyTilePreset(pr) {
+    jump(() => {
+      Object.assign(state, JSON.parse(JSON.stringify(pr.s)), { tpl: "tiles", twarp: 0, tgrain: 0 });
+      if (space.active) { space.active = false; spPtrs.clear(); }
+      view.z = 1; view.x = view.y = 0.5;
+      touches = [];
+      layout();
+      changed();
+    });
+  }
+  // The panel's map of the tiles: the nine colors sit on it as color pickers.
+  function drawTilePreview() {
+    const dm = tileDims(state);
+    putCells($("t-prev"), tileCells(state, dm), dm.cols, dm.rows);
+    $("tile-ed").style.aspectRatio = String(Math.max(0.5, Math.min(2, dm.cols / dm.rows)));
+  }
+  const TILE_HIDE = ["sec-format", "sec-grid", "space", "sec-tones", "sec-form", "sec-texture", "sec-color"];
+  function updateTilesUI() {
+    const on = state.tpl === "tiles";
+    document.querySelectorAll("#tpl button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === state.tpl)));
+    $("tpl-note").textContent = on ? "Square tiles, each one flat color, flowing between nine colors you set on the map." : "Stepped tones of square pixels, from light edges to a dark core.";
+    TILE_HIDE.forEach(id => { $(id).hidden = on; });
+    $("sec-tiles").hidden = !on;
+    const pf = $("motion-pixelflow");
+    pf.disabled = on;
+    pf.title = on ? "Pixel flow works with the tone field." : MOTIONS.find(m => m.id === "pixelflow").desc;
+    refreshJump();
+    if (!on) return;
+    const hexes = tileHexes(state), follow = [1, 3, 4, 5, 7].filter(i => !state.tgrid[i]).length;
+    hexes.forEach((h, i) => {
+      const inp = $("tcol-" + i);
+      inp.value = h;
+      inp.parentElement.style.background = h;
+      inp.parentElement.classList.toggle("auto", !state.tgrid[i]);
+    });
+    $("tfollow").hidden = follow === 5;
+    $("t-blend-row").hidden = follow === 0;
+    $("t-mid-note").textContent = follow === 5 ? "The in-between colors follow the corners. Pick any of them to bend the flow."
+      : follow ? "Dashed colors follow the corners. Pick any color on the map to bend the flow."
+      : "All nine colors are set: the corners, the middle of each edge and the middle.";
+    document.querySelectorAll("#t-blend button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === state.tblend)));
+    document.querySelectorAll("#t-edge button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === state.tedge)));
+    $("tcols-out").textContent = state.tcols;
+    $("trows-out").textContent = state.trows;
+    $("twarp-out").textContent = state.twarp + "%";
+    $("tgrain-out").textContent = state.tgrain + "%";
+    drawTilePreview();
+  }
+  document.querySelectorAll("#tpl button").forEach(b => b.addEventListener("click", () => {
+    if (state.tpl === b.dataset.v) return;
+    jump(() => {
+      state.tpl = b.dataset.v;
+      if (state.tpl === "tiles" && space.active) { space.active = false; spPtrs.clear(); }
+      view.z = 1; view.x = view.y = 0.5;
+      touches = [];
+      layout();
+      changed();
+    });
+  }));
+  for (let i = 0; i < 9; i++) {
+    const inp = $("tcol-" + i);
+    inp.addEventListener("input", () => {
+      const v = inp.value.toLowerCase();
+      if (!isHex(v)) return;
+      state.tgrid = state.tgrid.slice();
+      state.tgrid[i] = v;
+      changed();
+    });
+  }
+  $("tfollow").addEventListener("click", () => { state.tgrid = state.tgrid.map((h, i) => ([0, 2, 6, 8].includes(i) ? h : "")); changed(); });
+  document.querySelectorAll("#t-blend button").forEach(b => b.addEventListener("click", () => { if (state.tblend !== b.dataset.v) jump(() => { state.tblend = b.dataset.v; changed(); }); }));
+  document.querySelectorAll("#t-edge button").forEach(b => b.addEventListener("click", () => { state.tedge = b.dataset.v; changed(); }));
 
   FORMATS.forEach(f => {
     const b = document.createElement("button");
@@ -2878,6 +3306,7 @@ void main() {
     updateCueUI();
     updateFadeUI();
     updateTempoUI();
+    updateTilesUI();
     updateLabel();
     updateZoomUI();
     updateSave();
@@ -2889,11 +3318,12 @@ void main() {
     queueSendState();
   }
 
-  ["levels", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "speed", "strength", "tstrength", "tsize", "msens", "cstrength", "gdur", "prborder", "spspread", "spdens", "spcx", "spcy", "spcz", "spcut"].forEach(id => {
+  ["levels", "reach", "falloff", "round", "stretch", "tilt", "warp", "grain", "speed", "strength", "tstrength", "tsize", "msens", "cstrength", "gdur", "prborder", "spspread", "spdens", "spcx", "spcy", "spcz", "spcut", "tcols", "trows", "twarp", "tgrain"].forEach(id => {
     const el = sliders[id];
     el.addEventListener("input", () => {
       state[id] = +el.value;
       if (id === "levels") colorChanged(true);
+      if (id === "tcols" || id === "trows") layout();
       changed();
     });
   });
@@ -2908,6 +3338,8 @@ void main() {
       state.seed = 1000 + Math.floor(Math.random() * 9000);
       const w0 = state.wells[0];
       state.wells = seedWells(state.seed, [w0.x, w0.y]);
+      // Tiles: the same colors, turned or mirrored to other corners.
+      if (state.tpl === "tiles") state.tgrid = turnGrid(state.tgrid, 1 + Math.floor(Math.random() * 7));
       if (state.gmode === "once") restartGrowth();
       changed();
     }, { quant: !o.now, grow: true, cut: !!o.cut });
@@ -3054,7 +3486,7 @@ void main() {
   // ---------- exhibition ----------
   function applyExhibitLook() {
     stage.classList.toggle("inset", !state.exFill);
-    const outer = lut ? [lut.r[lut.L - 1], lut.g[lut.L - 1], lut.b[lut.L - 1]] : [0, 0, 0];
+    const outer = state.tpl === "tiles" ? tileGround(tilePoints(state)).map(v => Math.round(v * 255)) : lut ? [lut.r[lut.L - 1], lut.g[lut.L - 1], lut.b[lut.L - 1]] : [0, 0, 0];
     stage.style.setProperty("--ex-bg", state.exFill || state.exSurround === "black" ? "#000" : rgbCss(outer));
     $("ex-caption").hidden = !state.exCaption;
     const senses = [cam.on || (isOutput && remote.camOn) ? "movement" : "", room.on ? "sound" : ""].filter(Boolean);
@@ -3194,9 +3626,13 @@ void main() {
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       needsDraw = true;
     } else {
-      const P = fieldParams(state, 0, false, { dims: dm });
-      const lv = computeCPU(P, new Uint8Array(dm.cols * dm.rows));
-      const Uu = lut.u32;
+      let lv, Uu = lut.u32;
+      if (state.tpl === "tiles") {
+        const cells = tileCells(state, dm), n = dm.cols * dm.rows;
+        lv = new Uint32Array(n);
+        Uu = new Uint32Array(n);
+        for (let i = 0; i < n; i++) { lv[i] = i; Uu[i] = ((255 << 24) | (cells[i * 3 + 2] << 16) | (cells[i * 3 + 1] << 8) | cells[i * 3]) >>> 0; }
+      } else lv = computeCPU(fieldParams(state, 0, false, { dims: dm }), new Uint8Array(dm.cols * dm.rows));
       for (let y = 0; y < dm.rows; y++) {
         const base = y * s * Ew;
         let o = base;
@@ -4121,6 +4557,7 @@ void main() {
     return pulses.map(pl => ({ age: now - pl.t, amp: pl.amp }));
   }
   function toggleMotion(id) {
+    if (id === "pixelflow" && state.tpl === "tiles") return;
     const ms = motionSet(state);
     if (ms.has(id)) ms.delete(id); else { ms.add(id); state.playing = true; }
     lastToggled = id;
@@ -4289,16 +4726,31 @@ void main() {
     });
     $("cue-grid").append(b);
   }
-  const palLabel = s => { const p = PALETTES.find(x => x.id === s.palette) || PALETTES[0]; return p.custom ? `Hue ${s.hue}°` : p.name; };
+  const palLabel = s => { if (s.tpl === "tiles") return `${s.tcols} × ${s.trows}`; const p = PALETTES.find(x => x.id === s.palette) || PALETTES[0]; return p.custom ? `Hue ${s.hue}°` : p.name; };
   function cueText(c) {
     const ms = [...motionSet(c)].map(id => MOTIONS.find(m => m.id === id).name.toLowerCase());
+    if (c.tpl === "tiles") return `Tiles, ${c.tcols} × ${c.trows}, ${ms.length ? ms.join(" and ") : "still"}`;
     return `Study No. ${c.seed}, ${palLabel(c)}, ${c.levels} tones, ${ms.length ? ms.join(" and ") : "still"}`;
   }
   // A small picture of the cue, drawn on the CPU like the preset thumbnails.
   function drawCueThumb(cv, c) {
+    // Tiles get a finer canvas, so each tile stays a clean block.
+    const N = c && c.tpl === "tiles" ? 40 : 24;
+    if (cv.width !== N) cv.width = cv.height = N;
     const x2 = cv.getContext("2d");
     x2.clearRect(0, 0, cv.width, cv.height);
     if (!c) return;
+    if (c.tpl === "tiles") {
+      // Tiles: each tile drawn as a block, fitted into the square.
+      const s = Object.assign({}, DEFAULTS, c), dm = tileDims(s), cells = tileCells(s, dm), N = cv.width, k = N / Math.max(dm.cols, dm.rows);
+      const w = Math.round(dm.cols * k), h = Math.round(dm.rows * k), ox = (N - w) >> 1, oy = (N - h) >> 1, im = x2.createImageData(w, h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = Math.min(dm.rows - 1, Math.floor(y / k)) * dm.cols + Math.min(dm.cols - 1, Math.floor(x / k)), o = (y * w + x) * 4;
+        im.data[o] = cells[i * 3]; im.data[o + 1] = cells[i * 3 + 1]; im.data[o + 2] = cells[i * 3 + 2]; im.data[o + 3] = 255;
+      }
+      x2.putImageData(im, ox, oy);
+      return;
+    }
     const s = Object.assign({}, DEFAULTS, c), f = FORMATS.find(x => x.id === s.format) || FORMATS[0];
     const dm = dimsFor(24, f.w, f.h), pal = PALETTES.find(p => p.id === s.palette) || PALETTES[0];
     const lv = computeCPU(fieldParams(s, 0, false, { dims: dm }), new Uint8Array(dm.cols * dm.rows));
@@ -4640,7 +5092,7 @@ void main() {
   const prStatus = msg => { $("pr-status").textContent = msg; };
   let printing = false;
   const captionLeft = () => `${ARTIST} — Study No. ${state.seed}, 2026`;
-  const captionRight = dm => `Pixel Machine · ${dm.cols} × ${dm.rows} squares`;
+  const captionRight = dm => `Pixel Machine · ${dm.cols} × ${dm.rows} ${state.tpl === "tiles" ? "tiles" : "squares"}`;
   function printPlan() {
     const paper = PAPERS.find(pp => pp.id === state.prpaper) || PAPERS[1];
     const dm = dimsOf(state), a = dm.cols / dm.rows;
@@ -4675,7 +5127,7 @@ void main() {
     $("pr-vector-note").textContent = vec
       ? "PDF and SVG draw every square as a shape, sharp at any size, with each tone on its own layer for printers and plotters."
       : "PDF and SVG files are available up to 500 × 500 squares. For bigger grids, use the print PNG.";
-    if (state.palette === "signal" && !space.active) {
+    if (state.palette === "signal" && state.tpl !== "tiles" && !space.active) {
       $("pr-pdf").disabled = $("pr-svg").disabled = true;
       $("pr-vector-note").textContent = "Signal prints as a PNG: at 300 dpi its dots and lines stay perfectly sharp. PDF and SVG are for the color palettes.";
     }
@@ -4752,7 +5204,7 @@ void main() {
       }
       rank[i] = ri;
     }
-    return { C, R, rank, tones, dm };
+    return { C, R, rank, tones, dm, rgb: buf };
   }
   // Each tone becomes one layer covering its squares and every darker one, stacked light to dark, so shapes never leave gaps.
   function toneRuns(ct) {
@@ -4775,19 +5227,39 @@ void main() {
   }
   const hexOf = t => "#" + [t.r, t.g, t.b].map(v => v.toString(16).padStart(2, "0")).join("");
   const xmlEsc = str => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  // Tiles in a vector file: one rectangle per run of same-colored tiles in a row. Each reaches a hair
+  // into the next tile, which is drawn after it, so no seam shows between them.
+  function flatRuns(ct) {
+    const { C, R, rgb } = ct, out = [], px = i => [rgb[i * 4], rgb[i * 4 + 1], rgb[i * 4 + 2]];
+    for (let y = 0; y < R; y++) {
+      let x = 0;
+      while (x < C) {
+        const [r, g, b] = px(y * C + x);
+        let e = x + 1;
+        while (e < C) { const q = px(y * C + e); if (q[0] !== r || q[1] !== g || q[2] !== b) break; e++; }
+        out.push({ x, y, w: e - x + (e < C ? 0.02 : 0), h: 1 + (y + 1 < R ? 0.02 : 0), r, g, b });
+        x = e;
+      }
+    }
+    return out;
+  }
   function buildSVG(pl, ct, tr) {
     const f = v => +v.toFixed(3), cs = +(pl.aw / ct.C).toFixed(6), out = [];
     const font = 'font-family="Archivo, Helvetica, Arial, sans-serif"';
     out.push(`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${f(pl.W)}mm" height="${f(pl.H)}mm" viewBox="0 0 ${f(pl.W)} ${f(pl.H)}">\n`);
-    out.push(`<title>${xmlEsc(captionLeft())}</title>\n<desc>${xmlEsc(`Pixel Machine. ${ct.C} × ${ct.R} squares in ${ct.tones.length} tones. Each tone is a layer that covers its squares and every darker one.`)}</desc>\n`);
+    const desc = tr ? `Pixel Machine. ${ct.C} × ${ct.R} squares in ${ct.tones.length} tones. Each tone is a layer that covers its squares and every darker one.`
+      : `Pixel Machine. ${ct.C} × ${ct.R} tiles, each one flat color.`;
+    out.push(`<title>${xmlEsc(captionLeft())}</title>\n<desc>${xmlEsc(desc)}</desc>\n`);
     out.push(`<rect width="${f(pl.W)}" height="${f(pl.H)}" fill="#ffffff"/>\n`);
     out.push(`<g id="artwork" transform="translate(${f(pl.x)} ${f(pl.y)}) scale(${cs})">\n`);
-    out.push(`<rect id="tone-1" width="${ct.C}" height="${ct.R}" fill="${hexOf(ct.tones[0])}"/>\n`);
-    tr.layers.forEach((L, i) => {
-      const r = L.runs, d = [];
-      for (let j = 0; j < r.length; j += 3) d.push(`M${r[j]} ${r[j + 1]}h${r[j + 2]}v1h-${r[j + 2]}z`);
-      out.push(`<path id="tone-${i + 2}" fill="${hexOf(L.tone)}" d="${d.join("")}"/>\n`);
-    });
+    if (tr) {
+      out.push(`<rect id="tone-1" width="${ct.C}" height="${ct.R}" fill="${hexOf(ct.tones[0])}"/>\n`);
+      tr.layers.forEach((L, i) => {
+        const r = L.runs, d = [];
+        for (let j = 0; j < r.length; j += 3) d.push(`M${r[j]} ${r[j + 1]}h${r[j + 2]}v1h-${r[j + 2]}z`);
+        out.push(`<path id="tone-${i + 2}" fill="${hexOf(L.tone)}" d="${d.join("")}"/>\n`);
+      });
+    } else for (const t of flatRuns(ct)) out.push(`<rect x="${t.x}" y="${t.y}" width="${t.w}" height="${t.h}" fill="${hexOf(t)}"/>\n`);
     out.push(`</g>\n`);
     if (pl.caption) {
       out.push(`<text x="${f(pl.x)}" y="${f(pl.capY)}" ${font} font-size="${f(pl.capSize)}" fill="#1a1d21">${xmlEsc(captionLeft())}</text>\n`);
@@ -4803,13 +5275,15 @@ void main() {
     const parts = [`q\n1 1 1 rg 0 0 ${Wpt} ${Hpt} re f\n`];
     // Millimetres with y running down, then square units inside the artwork.
     parts.push(`${f(k)} 0 0 ${f(-k)} 0 ${Hpt} cm\n${cs} 0 0 ${cs} ${f(pl.x)} ${f(pl.y)} cm\n`);
-    parts.push(rgb(ct.tones[0]) + `0 0 ${ct.C} ${ct.R} re f\n`);
-    for (const L of tr.layers) {
-      const r = L.runs, seg = [rgb(L.tone)];
-      for (let j = 0; j < r.length; j += 3) seg.push(`${r[j]} ${r[j + 1]} ${r[j + 2]} 1 re\n`);
-      seg.push("f\n");
-      parts.push(seg.join(""));
-    }
+    if (tr) {
+      parts.push(rgb(ct.tones[0]) + `0 0 ${ct.C} ${ct.R} re f\n`);
+      for (const L of tr.layers) {
+        const r = L.runs, seg = [rgb(L.tone)];
+        for (let j = 0; j < r.length; j += 3) seg.push(`${r[j]} ${r[j + 1]} ${r[j + 2]} 1 re\n`);
+        seg.push("f\n");
+        parts.push(seg.join(""));
+      }
+    } else for (const t of flatRuns(ct)) parts.push(rgb(t) + `${t.x} ${t.y} ${t.w} ${t.h} re f\n`);
     parts.push("Q\n");
     if (pl.caption) {
       const fs = f(pl.capSize * k), yb = f(Hpt - pl.capY * k);
@@ -4857,8 +5331,8 @@ void main() {
     prStatus("Tracing the squares…");
     await wait(30);
     try {
-      const pl = printPlan(), ct = cellTones(), tr = toneRuns(ct);
-      if (tr.total > 900000) {
+      const pl = printPlan(), ct = cellTones(), tr = state.tpl === "tiles" ? null : toneRuns(ct);
+      if (tr && tr.total > 900000) {
         prStatus("This study has too many separate squares for a vector file. Lower the grain, or use the print PNG.");
       } else {
         const blob = kind === "pdf" ? await buildPDF(pl, ct, tr) : buildSVG(pl, ct, tr);
@@ -4966,7 +5440,7 @@ void main() {
     if (!downloads || !gl || tvBusy) return;
     tvBusy = true;
     updateTvUI();
-    const n = state.tvcount, W = 3840, H = 2160, dm = dimsFor(state.grid, 16, 9);
+    const n = state.tvcount, W = 3840, H = 2160, tiles = state.tpl === "tiles", dm = tiles ? tileDims(state, [16, 9]) : dimsFor(state.grid, 16, 9);
     const files = [];
     try {
       const c = document.createElement("canvas");
@@ -4976,10 +5450,11 @@ void main() {
         $("tv-pack").textContent = `Making image ${i + 1} of ${n}…`;
         const seed = 1000 + ((state.seed * 37 + i * 7919) % 9000);
         const snap = Object.assign(JSON.parse(JSON.stringify(state)), { seed, wells: seedWells(seed, [state.wells[0].x, state.wells[0].y]) });
+        if (tiles) snap.tgrid = turnGrid(state.tgrid, i % 8);
         await paintArt(x2, fieldParams(snap, time + i * 7.3, true, { dims: dm }), 0, 0, W, H, false, f => { progressEl.style.width = ((i + f) / n * 100) + "%"; });
         const blob = await new Promise(res => c.toBlob(res, "image/png"));
         if (!blob) throw new Error("no image");
-        files.push({ name: `pixel-machine-argiris-ser-study-${seed}-4k.png`, data: new Uint8Array(await blob.arrayBuffer()) });
+        files.push({ name: `pixel-machine-argiris-ser-${tiles ? "tiles" : "study"}-${seed}-4k.png`, data: new Uint8Array(await blob.arrayBuffer()) });
       }
       progressEl.style.width = "0";
       tvStatus("Confirm the save in the prompt.");
@@ -5453,6 +5928,7 @@ void main() {
       }
       space.dirty = true;
       space.active = true;
+      state.tpl = "field";
       if (!keepCamera) { space.yaw = 0.75; space.pitch = state.spview === "inside" ? 0 : 0.62; space.dist = 1.55; space.turn = 0; }
       const notes = [];
       if (Math.abs(sz - state.spsize) > 1e-9) notes.push(`The pixels are ${Math.round(sz * 100)} cm, the smallest this scan allows.`);
@@ -6035,7 +6511,10 @@ void main() {
     palette: "cerulean", hue: 229, invert: false, motion: "flow", speed: 40, strength: 40, touch: "ripple", tstrength: 60, tsize: 40,
     gmode: "off", gorder: "core", gdur: 20, exFill: true, exSurround: "black", exWander: true, exCaption: true, exquality: "full",
     sigpat: "dots", sigink: "white",
+    tpl: "field", tcols: 10, trows: 10, tblend: "hue", tedge: "sharp", twarp: 0, tgrain: 0,
   };
+  // Settings a link carries only for tiles.
+  const TILE_LINK = new Set(["tcols", "trows", "tblend", "tedge", "twarp", "tgrain"]);
   // Key in the link, setting, and the allowed range for numbers.
   const CANVAS_KEYS = [
     ["g", "grid"], ["f", "format"], ["l", "levels", 2, 32], ["r", "reach", 40, 180], ["fo", "falloff", 40, 160], ["ro", "round", 0, 100],
@@ -6044,11 +6523,13 @@ void main() {
     ["t", "touch"], ["ts", "tstrength", 10, 100], ["tz", "tsize", 0, 100], ["gm", "gmode"], ["go", "gorder"], ["gd", "gdur", 3, 120],
     ["fill", "exFill"], ["sur", "exSurround"], ["wan", "exWander"], ["cap", "exCaption"], ["q", "exquality"],
     ["sg", "sigpat"], ["si", "sigink"],
+    ["tp", "tpl"], ["tx", "tcols", 1, 64], ["ty", "trows", 1, 64], ["tb", "tblend"], ["te", "tedge"], ["tw", "twarp", 0, 100], ["tg", "tgrain", 0, 100],
   ];
   function canvasQuery(s) {
     const q = [["canvas", String(s.seed)]];
     for (const [key, id] of CANVAS_KEYS) {
       if (id === "hue" && s.palette !== "custom") continue;
+      if (TILE_LINK.has(id) && s.tpl !== "tiles") continue;
       const v = id === "motion" ? [...motionSet(s)].join(".") || "0" : s[id];
       if (v === (id === "motion" ? "flow" : CANVAS_BASE[id])) continue;
       q.push([key, typeof v === "boolean" ? (v ? "1" : "0") : String(v)]);
@@ -6056,6 +6537,11 @@ void main() {
     const n = Math.max(1, Math.min(4, s.centers)), seeded = seedWells(s.seed), ws = s.wells.slice(0, n);
     if (ws.some((w, k) => Math.abs(w.x - seeded[k].x) > 0.0005 || Math.abs(w.y - seeded[k].y) > 0.0005)) {
       q.push(["w", ws.map(w => `${+w.x.toFixed(4)},${+w.y.toFixed(4)}`).join(",")]);
+    }
+    // Tiles: the nine colors as hex, "0" for one that follows the corners.
+    if (s.tpl === "tiles") {
+      const enc = g => g.map(h => (h ? h.slice(1) : "0")).join(".");
+      if (enc(s.tgrid) !== enc(DEFAULTS.tgrid)) q.push(["tk", enc(s.tgrid)]);
     }
     return q.map(([k, v]) => k + "=" + encodeURIComponent(v).replace(/%2C/gi, ",")).join("&");
   }
@@ -6079,6 +6565,9 @@ void main() {
         state.wells[k / 2].y = q4(Math.max(-1.3, Math.min(1.3, xy[k + 1])));
       }
     }
+    state.tgrid = DEFAULTS.tgrid.slice();
+    const tk = (q.get("tk") || "").split(".");
+    if (tk.length === 9 && tk.every(h => h === "0" || /^[0-9a-f]{6}$/i.test(h))) state.tgrid = tk.map(h => (h === "0" ? "" : "#" + h.toLowerCase()));
     state.exchange = 0;
     sanitize();
   }
@@ -6105,6 +6594,7 @@ void main() {
     }
     bindCanvas();
     drawPresetThumbs();
+    drawTilePresetThumbs();
     cueThumbs();
     paintSwatches();
     buildLUT();
